@@ -2,10 +2,14 @@
    Nothing leaves the computer from here: the page itself sends the finished report to Google. */
 importScripts("pyodide/pyodide.js");
 
-let py = null, app = null;
+let py = null, app = null, loading = null;
 
-async function ready() {
-  if (app) return app;
+function ready() {                                // one load only, even when several messages come while it loads
+  if (!loading) loading = load().catch((e) => { loading = null; throw e; });
+  return loading;
+}
+
+async function load() {
   post({ kind: "progress", text: "Getting the report program ready (first time takes a few seconds) ..." });
   py = await loadPyodide({ indexURL: new URL("pyodide/", self.location.href).href });
   await py.loadPackage("sqlite3");
@@ -112,7 +116,9 @@ json.dumps(_out, default=str)`);
       }
       py.globals.set("NAME", path);
       py.globals.set("PW", m.password);
-      const res = py.runPython(`
+      let res;
+      try {
+        res = py.runPython(`
 import json
 try:
     _d, _b, _n, _s = app.upload_body(NAME, PW)
@@ -120,8 +126,10 @@ try:
 except app.UserError as e:
     _r = {"ok": False, "message": str(e)}
 json.dumps(_r)`);
+      } finally {
+        py.runPython('PW = ""; _b = _r = None');   // the password does not stay in memory here
+      }
       post({ kind: "body", id: m.id, result: JSON.parse(res) });
-      py.globals.set("PW", "");
       return;
     }
   } catch (e) {

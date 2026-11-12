@@ -351,7 +351,12 @@ function startWorker(){
     var w = waiting[m.id]; if (!w) return; delete waiting[m.id];
     if (m.kind === "error") w.bad(new Error(m.message)); else w.ok(m);
   };
-  worker.onerror = function(e){ Object.keys(waiting).forEach(function(k){ waiting[k].bad(new Error(e.message || "The report program stopped.")); delete waiting[k]; }); };
+  worker.onerror = function(e){
+    e.preventDefault();
+    try { worker.terminate(); } catch (x) {}
+    worker = null;                                  // a fresh one is started at the next try
+    Object.keys(waiting).forEach(function(k){ waiting[k].bad(new Error(e.message || "The report program stopped.")); delete waiting[k]; });
+  };
 }
 function ask(cmd, extra, transfer){
   startWorker();
@@ -412,16 +417,17 @@ var dateTouched = false;
 function isoDay(d){ return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
 (function(){ var y = new Date(); y.setDate(y.getDate() - 1); $("rdate").value = isoDay(y); $("dateNote").textContent = "Yesterday is taken until files are chosen."; })();
 $("rdate").addEventListener("change", function(){ dateTouched = true; $("dateNote").textContent = ""; });
-var guessNo = 0;
+var guessNo = 0, guessDone = Promise.resolve();    // making a report waits for the date to be read
 function filesChanged(){
   var list = chosen(); var n = ++guessNo;
   if (!list.length || dateTouched) return;
   $("dateNote").innerHTML = '<span class="spin"></span> Reading the date written in the files ...';
-  readAll(list).then(function(fs){ return ask("guess", {files:fs}); }).then(function(m){
+  guessDone = readAll(list).then(function(fs){ return ask("guess", {files:fs}); }).then(function(m){
     if (n !== guessNo || dateTouched) return;
     if (m.date) { $("rdate").value = m.date; var p = m.date.split("-"); $("dateNote").textContent = "Date found in the files: " + p[2] + "." + p[1] + "." + p[0] + "."; }
     else $("dateNote").textContent = "No date found in the files. Check the date.";
   }).catch(function(e){ if (n === guessNo) $("dateNote").textContent = "Check the date (" + e.message + ")."; });
+  return guessDone;
 }
 
 /* ---------- progress and log ---------- */
@@ -513,7 +519,7 @@ function make(andSend){
   busy(true); LOG = []; $("results").hidden = true;
   setProgress(0, "Reading the shared Agriculture list ...");
   var typesNote = null;
-  getList().then(function(l){ var keep = DISCOMS.some(function(g){ return changed(g.d); }); LIST.rows = l; LIST.loaded = true; if (!keep) resetEdits(); return asTypeRows(l); }, function(e){
+  guessDone.catch(function(){}).then(getList).then(function(l){ rebase(l); renderList(); return asTypeRows(l); }, function(e){
     typesNote = "The shared Agriculture list could not be read (" + e.message + "). The starting list of 8 feeders built into the program was used. Check the figures before sending.";
     return null;
   }).then(function(types){
@@ -525,7 +531,7 @@ function make(andSend){
   }).then(function(m){
     var r = m.result;
     if (!r.ok) { setProgress(0, ""); $("bar").hidden = true; $("status").textContent = ""; showFail(r.message); return; }
-    LAST = {result:r, typesNote:typesNote};
+    LAST = {result:r, typesNote:typesNote, sent:{}};
     showResult(r, typesNote);
     $("status").textContent = "Report ready.";
     if (andSend) return sendParts();
@@ -558,7 +564,9 @@ function showResult(r, typesNote){
     var kv = el("div", {class:"kv num"}); items.forEach(function(it){ kv.appendChild(el("span", {text:it[0]})); kv.appendChild(el("b", {text:it[1]})); });
     tiles.appendChild(el("div", {class:"tile " + (/^(SBPDCL|NBPDCL)$/.test(name) ? name : "BIHAR")}, [el("h4", {text:name}), kv]));
   });
-  var dl = $("downloads"); dl.textContent = "";
+  var dl = $("downloads");
+  Array.prototype.forEach.call(dl.querySelectorAll("a"), function(a){ try { URL.revokeObjectURL(a.href); } catch (e) {} });
+  dl.textContent = "";
   (r.blobs || []).forEach(function(b){
     var url = URL.createObjectURL(new Blob([b.bytes], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
     dl.appendChild(el("a", {href:url, download:b.name, title:"Download " + b.name, html:IC_DL}, [el("span", {text:b.name})]));
@@ -581,8 +589,9 @@ function sendParts(){
   if (!r.parts.length) { msg("sendMsgs", "warn", "Nothing to send: no DISCOM file was read."); return Promise.resolve(); }
   var chain = Promise.resolve(), fails = 0;
   r.parts.forEach(function(p){
+    if (LAST.sent[p[0]]) { msg("sendMsgs", "info", p[0] + " was already sent."); return; }     // "send again" sends only what failed
     chain = chain.then(function(){ return sendOne(p[0], function(pw){ return ask("body", {name:p[1], password:pw}).then(function(m){ return m.result; }); }, "sendMsgs"); })
-                 .then(function(ok){ if (!ok) fails++; });
+                 .then(function(ok){ if (ok) LAST.sent[p[0]] = true; else fails++; });
   });
   return chain.then(function(){
     $("bar").hidden = true; $("status").textContent = fails ? "Not everything was sent. See the messages above." : "Dashboard updated.";
@@ -627,10 +636,14 @@ function renderAgri(){
 }
 function syncAll(){ var open = AGRI.filter(function(x){ return !onList(x); }); $("agriAll").checked = open.length > 0 && open.every(function(x){ return x.tick; }); }
 $("agriAll").addEventListener("change", function(){ var on = this.checked; AGRI.forEach(function(x){ if (!onList(x)) x.tick = on; }); renderAgri(); });
+/* the same feeder: same meter number, or same feeder code in the same circle (a blank circle means any circle, as in the program) */
 function sameFeeder(a, b){
   var k = function(s){ return String(s || "").toUpperCase().replace(/\s+/g, ""); };
+  var ck = function(s){ return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/CIRCLE$/, ""); };
   if (a.discom && b.discom && a.discom !== b.discom) return false;
-  return (k(a.code) && k(a.code) === k(b.code)) || (k(a.meter) && k(a.meter) === k(b.meter));
+  if (k(a.meter) && k(a.meter) === k(b.meter)) return true;
+  if (k(a.code) && k(a.code) === k(b.code)) return !ck(a.circle) || !ck(b.circle) || ck(a.circle) === ck(b.circle);
+  return false;
 }
 function onList(x){ return LIST.loaded && LIST.rows.some(function(r){ return sameFeeder(r, x) && (r.type || "Agriculture") === "Agriculture"; }); }
 $("agriAdd").addEventListener("click", function(){
@@ -648,7 +661,7 @@ $("agriAdd").addEventListener("click", function(){
         return saveList(d, next, "agriMsgs").then(function(ok){ if (ok) added += by[d].length; });
       });
     });
-    return chain.then(function(){ return getList().then(function(l2){ LIST.rows = l2; resetEdits(); }).catch(function(){}); })
+    return chain.then(function(){ return getList().then(function(l2){ rebase(l2); }).catch(function(){}); })
       .then(function(){ if (added) msg("agriMsgs", "info", "Press 'Make report and update dashboard' again to count " + (added === 1 ? "this feeder" : "these " + added + " feeders") + " as Agriculture in today's figures."); });
   }).catch(function(e){ msg("agriMsgs", "error", "The shared list could not be read (" + e.message + "). Nothing was changed."); })
     .then(function(){ AGRI.forEach(function(x){ x.tick = false; }); busy(false); renderAgri(); renderList(); });
@@ -680,6 +693,21 @@ function saveList(discom, rows, listId){
   var seg = $("listScope");
   DISCOMS.forEach(function(g){ seg.appendChild(el("button", {type:"button", "data-d":g.d, "aria-pressed":String(g.d === LIST.scope), text:g.d, onclick:function(){ LIST.scope = g.d; Array.prototype.forEach.call(seg.children, function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-d") === g.d)); }); renderList(); }})); });
 })();
+/* takes a fresh list from the web app and keeps the changes not yet saved on the list page */
+function rebase(rows){
+  var gone = {}, news = {};
+  DISCOMS.forEach(function(g){
+    var e = LIST.edit[g.d] || [];
+    gone[g.d] = e.filter(function(r){ return r._gone; });
+    news[g.d] = e.filter(function(r){ return r._new && !rows.some(function(s){ return sameFeeder(s, r); }); });
+  });
+  LIST.rows = rows; LIST.loaded = true; LIST.edit = {};
+  DISCOMS.forEach(function(g){
+    LIST.edit[g.d] = rows.filter(function(r){ return r.discom === g.d; }).map(function(r){
+      var c = Object.assign({}, r); if (gone[g.d].some(function(x){ return sameFeeder(x, r); })) c._gone = true; return c;
+    }).concat(news[g.d]);
+  });
+}
 function resetEdits(){ LIST.edit = {}; DISCOMS.forEach(function(g){ LIST.edit[g.d] = LIST.rows.filter(function(r){ return r.discom === g.d; }).map(function(r){ return Object.assign({}, r); }); }); }
 function changed(d){
   var now = (LIST.edit[d] || []).filter(function(r){ return !r._gone; });
@@ -689,7 +717,7 @@ function changed(d){
 }
 function loadList(){
   LIST.loading = true; $("listStatus").innerHTML = '<span class="spin"></span> Loading the list ...';
-  getList().then(function(l){ LIST.rows = l; LIST.loaded = true; resetEdits(); $("listStatus").textContent = ""; })
+  getList().then(function(l){ rebase(l); $("listStatus").textContent = ""; })
     .catch(function(e){ $("listStatus").textContent = "The list could not be loaded (" + e.message + "). Press Reload to try again."; })
     .then(function(){ LIST.loading = false; renderList(); renderAgri(); });
 }
@@ -733,16 +761,25 @@ $("aAdd").addEventListener("click", function(){
 $("listUndo").addEventListener("click", function(){ resetEdits(); renderList(); });
 $("listSave").addEventListener("click", function(){
   var d = LIST.scope; clearMsgs("listMsgs"); BUSY = true; $("listSave").disabled = true;
-  saveList(d, LIST.edit[d].filter(function(r){ return !r._gone; }), "listMsgs").then(function(ok){
+  // only the changes made here are applied to the list as it is now, so a feeder that someone else
+  // added or removed in the meantime is not undone
+  var gone = LIST.edit[d].filter(function(r){ return r._gone; }), news = LIST.edit[d].filter(function(r){ return r._new; });
+  getList().then(function(server){
+    var mine = server.filter(function(r){ return r.discom === d; });
+    var next = mine.filter(function(r){ return !gone.some(function(g){ return sameFeeder(g, r); }); })
+                   .concat(news.filter(function(n){ return !mine.some(function(r){ return sameFeeder(r, n); }); }));
+    return saveList(d, next, "listMsgs");
+  }, function(e){ msg("listMsgs", "error", d + ": not saved, the list could not be read (" + e.message + "). Nothing was changed."); return false; })
+  .then(function(ok){
     BUSY = false;
-    if (ok) loadList(); else renderList();
+    if (ok) { LIST.edit[d] = []; loadList(); } else renderList();
   });
 });
 window.addEventListener("beforeunload", function(e){ if (DISCOMS.some(function(g){ return changed(g.d); })) { e.preventDefault(); e.returnValue = ""; } });
 
 /* start */
 showTab(location.hash === "#list" ? "list" : "report");
-if (LINK_OK) getList().then(function(l){ LIST.rows = l; LIST.loaded = true; resetEdits(); renderList(); }).catch(function(){});
+if (LINK_OK) getList().then(function(l){ rebase(l); renderList(); renderAgri(); }).catch(function(){});
 setTimeout(function(){ ask("warm").catch(function(){}); }, 400);   // gets the program ready while files are chosen
 </script>
 </body>
