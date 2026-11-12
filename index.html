@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bihar 11 kV Feeder Outage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --ink:#1d2433; --ink2:#667085; --muted:#667085; --faint:#98a2b3; --line:#e7eaf0; --track:#eef0f5; --page:#f5f6fa; --card:#ffffff;
+  --shadow:0 1px 2px rgba(29,36,51,.04),0 10px 28px -14px rgba(29,36,51,.22);
+  --shadow-up:0 2px 4px rgba(29,36,51,.05),0 18px 34px -14px rgba(29,36,51,.30);
+  /* the two DISCOMs: fixed */
+  --sb:#2a78d6; --nb:#eb6834;
+  /* status: fixed. mark / text / tint / edge */
+  --good:#22a35a;    --good-t:#1a8a4c;    --good-bg:#eaf8f0;    --good-bd:#bfe6cf;
+  --warn:#e3a21a;    --warn-t:#9a6400;    --warn-bg:#fff7e4;    --warn-bd:#f3dca2;
+  --serious:#df4b3f; --serious-t:#b8352b; --serious-bg:#fff0ee; --serious-bd:#f5c6c1;
+  --crit:#9e2a22;    --crit-t:#86211b;    --crit-bg:#fbe7e5;    --crit-bd:#e7b2ad;
+  --nodata:#a3abbb;  --nodata-t:#6b7385;  --nodata-bg:#f4f5f8;  --nodata-bd:#e3e6ed;
+  /* measures: fixed */
+  --m-ev:#5b6ee1;  --m-ev-bg:#eef0fd;
+  --m-fd:#0f9f8f;  --m-fd-bg:#e5f6f3;
+  --m-ov:#c8438f;  --m-ov-bg:#fbedf5;
+  --m-mpi:#a25ad9; --m-mpi-bg:#f6eefc;
+  /* feeder types: fixed */
+  --ft1:#0f9f8f; --ft2:#5b6ee1; --ft3:#a25ad9; --ft4:#c8438f;
+  /* theme (Sunrise until the page sets the chosen one) */
+  --t1:#f0752f; --t2:#f7a531; --t1a:rgba(240,117,47,.16); --t2a:rgba(247,165,49,.14); --t1s:rgba(240,117,47,.09);
+  --r1:#f9c3a2; --r2:#f6a679; --r3:#f38a51; --r4:#f0752f; --r5:#c86330; --r6:#a15231; --r7:#7a4132;
+  --q1:#fbd6a0; --q2:#f9be6a; --q3:#f7a531; --q4:#cb8a32; --q5:#9f6f33;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+body{color:var(--ink);font:15px/1.45 "Outfit","Segoe UI",system-ui,sans-serif;-webkit-text-size-adjust:100%;min-height:100vh;
+  background:
+    radial-gradient(900px 560px at 0% -8%, var(--t1a), transparent 62%),
+    radial-gradient(820px 520px at 100% 0%, var(--t2a), transparent 60%),
+    radial-gradient(1000px 640px at 55% 112%, var(--t1s), transparent 62%),
+    var(--page);
+  background-attachment:fixed}
+button,select,input{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+.wrap{max-width:1360px;margin:0 auto;padding-left:24px;padding-right:24px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid rgba(231,234,240,.8)}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-top:11px;padding-bottom:11px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 280px}
+.bolt{flex:none;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--t1),var(--t2));display:grid;place-items:center;box-shadow:0 8px 18px -4px var(--t1a)}
+.bolt svg{width:22px;height:22px}
+.brand h1{font-size:19px;font-weight:700;letter-spacing:-.2px;line-height:1.15}
+.datepill{margin-top:2px;font-size:13px;font-weight:500;color:var(--ink2)}
+.seg{display:inline-flex;background:var(--track);border-radius:999px;padding:4px;gap:2px}
+.seg:empty{display:none}
+.seg button{border:0;background:transparent;color:var(--ink2);padding:7px 16px;border-radius:999px;font-weight:600;cursor:pointer;min-height:36px;transition:background .2s,color .2s,box-shadow .2s}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(29,36,51,.08),0 4px 10px -4px rgba(29,36,51,.18)}
+.swatches{display:inline-flex;gap:8px;align-items:center;padding:0 2px}
+.swatches button{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0;transition:transform .2s,box-shadow .2s}
+.swatches button:hover{transform:scale(1.08)}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.refresh{border:0;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:999px;cursor:pointer;color:#fff;font-weight:600;
+  background:linear-gradient(135deg,var(--t1),var(--t2));box-shadow:0 8px 16px -8px var(--t1)}
+.refresh svg{width:17px;height:17px;transition:transform .6s}
+.refresh.spin svg{transform:rotate(360deg)}
+.refresh:hover{filter:brightness(1.05)}
+.pdfwrap{position:relative}
+.pdfbtn{border:1px solid var(--line);background:#fff;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:999px;cursor:pointer;font-weight:600;color:var(--ink);box-shadow:var(--shadow)}
+.pdfbtn:hover{background:#f6f7fb}
+.pdfbtn svg{width:17px;height:17px;color:var(--t1)}
+.pdfbtn svg.chev{width:13px;height:13px;color:var(--ink2)}
+.pdfmenu{position:absolute;right:0;top:46px;z-index:40;width:310px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 4px rgba(29,36,51,.06),0 18px 40px -16px rgba(29,36,51,.35);padding:6px}
+.pdfmenu button{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:9px 10px;cursor:pointer}
+.pdfmenu button:hover,.pdfmenu button:focus-visible{background:#f6f7fb}
+.pdfmenu .pi{flex:none;width:34px;height:34px;border-radius:10px;background:var(--t1a);color:var(--t1);display:grid;place-items:center}
+.pdfmenu .pi svg{width:18px;height:18px}
+.pdfmenu b{display:block;font-size:14px;font-weight:600}
+.pdfmenu .s{display:block;font-size:12px;color:var(--ink2);line-height:1.3;margin-top:1px}
+.pages{display:inline-flex;flex-wrap:wrap;gap:4px;margin-bottom:18px;background:var(--track);border-radius:14px;padding:4px;max-width:100%}
+.pages[hidden]{display:none}
+.pages button{border:0;background:transparent;padding:9px 20px;border-radius:11px;font-weight:600;color:var(--ink2);cursor:pointer;min-height:40px;font-size:15px}
+.pages button:hover{color:var(--ink)}
+.pages button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(29,36,51,.08),0 4px 10px -4px rgba(29,36,51,.18)}
+.pdfgo{margin-left:auto;display:inline-flex;align-items:center;gap:7px}
+.pdfgo svg{width:16px;height:16px}
+.bsec{margin-top:22px}
+.bhead{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin-bottom:4px}
+.bhead .dot{width:12px;height:12px;background:var(--dc)}
+.bhead h2{font-size:21px;font-weight:700;letter-spacing:-.3px}
+.bcard{margin-top:12px;border-left:5px solid var(--dc)}
+.brow{display:grid;grid-template-columns:32px minmax(0,1.15fr) 150px minmax(0,1.6fr);gap:14px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+.brow:last-child{border-bottom:0}
+.bcard .brow:nth-child(3){margin-top:6px}
+.brow .no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--serious-bg);color:var(--serious-t)}
+.brow .t1{font-weight:700;font-size:15px;line-height:1.25;overflow-wrap:anywhere}
+.brow .t1.link{border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.brow .t1.link:hover{text-decoration-color:var(--t1)}
+.brow .t2{font-size:12px;color:var(--ink2);margin-top:2px;line-height:1.35}
+.bv{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.bv b{font-size:22px;font-weight:700;letter-spacing:-.5px;line-height:1;font-variant-numeric:tabular-nums}
+.bv .chip{padding:2px 9px;font-size:11.5px}
+.bvs{font-size:12px;color:var(--ink2)}
+.cboxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;min-width:0;max-width:640px}
+.cbox{background:#f7f8fb;border:1px solid var(--line);border-radius:12px;padding:7px 10px;min-width:0;display:block;color:inherit;text-decoration:none}
+a.cbox{cursor:pointer;transition:border-color .15s,background .15s}
+a.cbox:hover{border-color:var(--t1);background:#fff}
+.crole{font-size:11.5px;color:var(--ink2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px}
+.cnum{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14px}
+.call{display:inline-flex;align-items:center;gap:5px;color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2));border-radius:999px;padding:5px 12px;font-weight:700;font-size:12.5px;text-decoration:none;white-space:nowrap;min-height:30px}
+.call svg{width:14px;height:14px}
+.call:hover{filter:brightness(1.05)}
+.cnone{font-size:12.5px;color:var(--faint);margin-top:4px}
+.cname{font-size:13.5px;font-weight:600;color:var(--ink);margin-top:2px;line-height:1.25;overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,16px);z-index:95;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 2px 4px rgba(29,36,51,.06),0 18px 40px -16px rgba(29,36,51,.35);padding:10px 14px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast a{color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2));border-radius:999px;padding:5px 13px;font-weight:600;text-decoration:none;white-space:nowrap}
+button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--t1);outline-offset:2px}
+
+main.wrap{padding-top:22px;padding-bottom:48px}
+.sec{margin-top:28px}
+.sechead{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.sechead h2{font-size:19px;font-weight:700;letter-spacing:-.2px}
+.count{font-size:12.5px;font-weight:600;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:1px 10px}
+.card{background:var(--card);border:1px solid rgba(231,234,240,.7);border-radius:18px;box-shadow:var(--shadow);padding:18px;min-width:0}
+.card h3{font-size:15px;font-weight:600;color:var(--ink)}
+.card .sub3{font-size:12.5px;color:var(--ink2);margin-top:1px}
+
+/* ---------- dial + KPI tiles ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr);gap:16px}
+.dialcard{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 18px 18px}
+.dialbox{position:relative;width:100%;max-width:380px}
+.dialbox svg{display:block;width:100%;height:auto;overflow:visible}
+.needle{transition:transform 1.3s cubic-bezier(.3,1.25,.4,1)}
+.arcv{transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)}
+.dialval{text-align:center;margin-top:6px}
+.dialval .v{font-size:58px;font-weight:700;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+.dialval .u{font-size:13px;font-weight:500;color:var(--ink2);margin-left:6px;letter-spacing:0}
+.dialval .l{font-size:14px;font-weight:500;color:var(--ink2);margin-top:6px}
+.chiprow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.kpi{border-radius:18px;padding:16px 16px 12px;display:flex;flex-direction:column;min-height:150px;min-width:0;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#fff 35%,var(--kt));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow)}
+.kpi .kh{display:flex;align-items:center;gap:10px}
+.kpi .ico{flex:none;width:40px;height:40px;border-radius:12px;background:var(--kc);display:grid;place-items:center;color:#fff;box-shadow:0 6px 14px -6px var(--kc)}
+.kpi .ico svg{width:21px;height:21px}
+.kpi .lab{font-size:13.5px;font-weight:600;color:var(--ink2);line-height:1.25}
+.kpi .val{font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.1;margin-top:10px;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12.5px;color:var(--ink2)}
+.kpi .move{align-self:flex-start;margin-top:7px;font-size:12px;font-weight:600;color:var(--kc);background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+.spark{flex:1 1 40px;min-height:34px;margin:8px -16px -12px;position:relative}
+.spark svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.k-ev{--kc:var(--m-ev);--kt:var(--m-ev-bg)}
+.k-fd{--kc:var(--m-fd);--kt:var(--m-fd-bg)}
+.k-ov{--kc:var(--m-ov);--kt:var(--m-ov-bg)}
+.k-mpi{--kc:var(--m-mpi);--kt:var(--m-mpi-bg)}
+
+/* ---------- small fact tiles ---------- */
+.facts6{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:16px}
+.stats4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stats2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.stat{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);border:1px solid rgba(231,234,240,.7);display:flex;gap:11px;align-items:flex-start;min-width:0}
+.stat .ic{flex:none;width:34px;height:34px;border-radius:10px;background:var(--t1a);color:var(--t1);display:grid;place-items:center}
+.stat .ic svg{width:18px;height:18px}
+.stat .l{font-size:12.5px;font-weight:500;color:var(--ink2);line-height:1.25}
+.stat .v{font-size:22px;font-weight:700;letter-spacing:-.4px;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12px;color:var(--ink2)}
+
+/* ---------- DISCOM cards ---------- */
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.dcard{display:flex;flex-direction:column;text-align:left;width:100%;cursor:pointer;position:relative;overflow:hidden;padding:16px 18px 14px 25px;transition:transform .2s,box-shadow .2s}
+.dcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--dc)}
+.dcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-up)}
+.dtop{display:flex;align-items:center;gap:16px}
+.dcard .mini{flex:none;width:124px}
+.dcard .mini svg{display:block;width:100%;height:auto;overflow:visible}
+.dcard .mv{text-align:center;font-size:21px;font-weight:700;margin-top:-2px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.dname{font-size:16px;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:6px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--dc);display:inline-block;flex:none}
+.mbars{flex:1;min-width:0;display:grid;gap:8px}
+.mbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:12.5px;color:var(--ink2);align-items:end}
+.mbar b{color:var(--ink);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.mbar .trk{grid-column:1 / -1;height:6px}
+.dfoot{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+
+/* ---------- charts ---------- */
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.grid3 .full{grid-column:1 / -1}
+.grid3 > .card{display:flex;flex-direction:column}
+.grid3 > .card > .donutrow{flex:1}
+.grid3 > .card > .trows{flex:1;align-content:space-evenly}
+.hbars.two{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:44px;grid-auto-flow:column}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink2);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.trk{position:relative;background:var(--track);border-radius:99px;overflow:hidden}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--bc);width:0;transition:width .9s cubic-bezier(.2,.8,.2,1);min-width:3px}
+.hbars{margin-top:14px;display:grid;gap:10px}
+.hbar{display:grid;grid-template-columns:minmax(84px,150px) minmax(0,1fr) 52px;align-items:center;gap:10px;font-size:13.5px}
+.hbar .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2);font-weight:500}
+.hbar .trk{height:9px}
+.hbar .vl{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.hbar:hover .fill,.rrow:hover .fill{filter:brightness(1.08)}
+.cols{display:flex;align-items:flex-end;gap:8px;height:160px;margin-top:22px}
+.colw{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.colw .bar{width:100%;max-width:34px;background:var(--bc);border-radius:10px 10px 3px 3px;height:0;transition:height .9s cubic-bezier(.2,.8,.2,1);min-height:3px}
+.colw .cv{font-size:12.5px;font-weight:600;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.colw:hover .bar{filter:brightness(1.08)}
+.collabs{display:flex;gap:8px;margin-top:8px}
+.collabs div{flex:1;text-align:center;font-size:11px;color:var(--ink2);line-height:1.2;min-width:0}
+.donutrow{display:flex;align-items:center;gap:18px;margin-top:12px}
+.donut{flex:none;width:150px;height:150px;position:relative}
+.donut svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.donut circle{transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1),stroke-width .15s}
+.donut circle.seg:hover{stroke-width:19}
+.donut .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.donut .mid b{display:block;font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1;font-variant-numeric:tabular-nums}
+.donut .mid span{font-size:11.5px;color:var(--ink2)}
+.dlist{flex:1;display:grid;gap:7px;min-width:0}
+.dlist div{display:grid;grid-template-columns:12px minmax(0,1fr) auto 44px;gap:8px;align-items:center;font-size:13px}
+.dlist .n{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dlist b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.dlist em{font-style:normal;color:var(--faint);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.stackbar{display:flex;gap:3px;height:10px;margin-top:14px;border-radius:99px;overflow:hidden}
+.stackbar i{display:block;height:100%;background:var(--bc);width:0;transition:width .9s cubic-bezier(.2,.8,.2,1);min-width:3px}
+.trows{display:grid;gap:11px;margin-top:14px}
+.trow{display:grid;grid-template-columns:12px minmax(54px,auto) minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13.5px}
+.trow .n{font-weight:500} .trow .c{color:var(--ink2);font-size:12px;font-weight:400;margin-left:6px}
+.trow .trk{height:8px}
+.trow b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.trend{display:flex;align-items:flex-end;gap:10px;height:190px;margin-top:20px}
+.trend .colw .bar{max-width:46px;background:linear-gradient(180deg,var(--t2),var(--t1))}
+.trend .colw.gap .cv{color:var(--faint)}
+.trend .colw .bar.none{background:repeating-linear-gradient(135deg,var(--track) 0 6px,#fff 6px 10px);height:14px;border:1px dashed var(--line)}
+.pbody .trend{height:150px}
+.tw{margin-top:9px;padding-top:8px;border-top:1px solid var(--sbd)}
+.twl{display:flex;justify-content:space-between;gap:6px;font-size:11.5px;color:var(--ink2);flex-wrap:wrap}
+.twl b{font-weight:600;color:var(--ink2)} .twl b.up{color:var(--serious-t)} .twl b.down{color:var(--good-t)}
+.twsp{height:26px;margin-top:4px}
+.twsp svg{display:block;width:100%;height:100%}
+
+/* ---------- controls ---------- */
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.ctrl select,.ctrl input{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-height:40px;min-width:0;box-shadow:var(--shadow)}
+.ctrl input{width:190px}
+.pills{display:inline-flex;flex-wrap:wrap;background:var(--track);border-radius:12px;padding:3px;gap:2px}
+.pills button{border:0;background:transparent;padding:6px 13px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--ink2);min-height:32px;transition:background .2s,color .2s,box-shadow .2s}
+.pills button:hover{color:var(--ink)}
+.pills button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(29,36,51,.08),0 4px 10px -4px rgba(29,36,51,.18)}
+.keys{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
+.iconkey{margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--ink2)}
+.iconkey span{display:inline-flex;align-items:center;gap:5px}
+.iconkey svg{width:14px;height:14px;color:var(--faint)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;color:var(--st,var(--ink));background:var(--sbg,#fff);border:1px solid var(--sbd,var(--line));white-space:nowrap}
+.chip .dt{width:8px;height:8px;border-radius:50%;background:var(--sc,var(--faint));flex:none}
+.chip small{font-size:12px;font-weight:500;color:var(--ink2)}
+button.chip{cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .2s;min-height:34px;padding:5px 12px}
+button.chip:hover{transform:translateY(-1px)}
+button.chip[aria-pressed="true"]{box-shadow:0 0 0 2px var(--sc,var(--ink))}
+.keys.filtering button.chip[aria-pressed="false"]{opacity:.5}
+.chip em{font-style:normal;font-weight:700;background:#fff;border-radius:999px;padding:0 7px;font-size:12px;color:var(--ink)}
+.dchip{--sbg:#fff;--st:var(--ink);--sc:var(--dc)}
+
+/* ---------- division tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.tile{border:1px solid var(--sbd);border-radius:18px;padding:13px 14px 13px;text-align:left;cursor:pointer;position:relative;display:flex;flex-direction:column;width:100%;min-width:0;
+  background:linear-gradient(165deg,#fff 38%,var(--sbg));box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-up)}
+.tile .hd{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.tile .who{display:flex;gap:9px;min-width:0;align-items:flex-start}
+.tile .rkb{flex:none;min-width:26px;height:26px;padding:0 6px;border-radius:99px;background:#fff;border:1px solid var(--sbd);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--st);font-variant-numeric:tabular-nums}
+.tile .nm{font-weight:700;font-size:14.5px;line-height:1.2;overflow-wrap:anywhere}
+.tile .ci{color:var(--ink2);font-size:12px;margin-top:2px}
+.tile .ring{flex:none;width:46px;height:46px;position:relative}
+.tile .ring i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:11.5px;font-weight:700;color:var(--st)}
+.tile .big{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1.05;margin-top:8px;font-variant-numeric:tabular-nums}
+.tile .big.none{font-size:19px;letter-spacing:0;color:var(--ink2);margin-top:14px}
+.tile .tl{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.tile .tl .chip{padding:2px 9px;font-size:11.5px}
+.tile .thin{height:5px;margin-top:10px}
+.tile .facts{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:12.5px;color:var(--ink2)}
+.tile .facts span{display:inline-flex;align-items:center;gap:5px}
+.tile .facts svg{width:14px;height:14px;color:var(--faint)}
+.tile .facts b{color:var(--ink);font-weight:700}
+.ringc{transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
+.empty{color:var(--ink2);padding:26px;text-align:center}
+.s-good{--sc:var(--good);--st:var(--good-t);--sbg:var(--good-bg);--sbd:var(--good-bd)}
+.s-warn{--sc:var(--warn);--st:var(--warn-t);--sbg:var(--warn-bg);--sbd:var(--warn-bd)}
+.s-serious{--sc:var(--serious);--st:var(--serious-t);--sbg:var(--serious-bg);--sbd:var(--serious-bd)}
+.s-crit{--sc:var(--crit);--st:var(--crit-t);--sbg:var(--crit-bg);--sbd:var(--crit-bd)}
+.s-nodata,.tile.off{--sc:var(--nodata);--st:var(--nodata-t);--sbg:var(--nodata-bg);--sbd:var(--nodata-bd)}
+
+/* ---------- rankings + feeder lists ---------- */
+.rlist{display:grid;gap:2px}
+.rrow{display:grid;grid-template-columns:32px minmax(0,300px) minmax(60px,1fr) 70px;gap:12px;align-items:center;padding:8px;border-radius:12px}
+.rowbtn{border:0;background:transparent;text-align:left;width:100%;cursor:pointer}
+.rrow:hover{background:#f6f7fb}
+.rrow .no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--sbg);color:var(--st)}
+.rlist.worst .rrow{--sbg:var(--serious-bg);--st:var(--serious-t)}
+.rlist.best .rrow{--sbg:var(--good-bg);--st:var(--good-t)}
+.rrow .t1{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .t2{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .trk{height:5px}
+.rrow .vl{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;font-size:16px}
+.frow{display:grid;grid-template-columns:minmax(0,1fr) auto 58px;gap:12px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line)}
+.frow:last-child{border-bottom:0}
+.frow .t1{font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+.frow .t2{font-size:12px;color:var(--ink2);overflow-wrap:anywhere}
+.frow .trk{height:5px;margin-top:6px}
+.badge{display:inline-flex;align-items:center;gap:4px;background:var(--m-ev-bg);color:#3f4fb8;border-radius:999px;padding:2px 9px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.badge svg{width:12px;height:12px}
+.frow .o{text-align:right;font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 16px;font-weight:600;cursor:pointer;min-height:40px;color:var(--ink);box-shadow:var(--shadow)}
+.btn:hover{background:#f6f7fb}
+.btn.go{border:0;color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2))}
+.more{margin-top:10px;text-align:center}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;margin-top:14px;align-items:start}
+.agwrap{border-radius:18px;padding:18px;background:linear-gradient(160deg,rgba(255,255,255,.75),rgba(255,255,255,.45));border:1px solid rgba(231,234,240,.8)}
+
+/* ---------- detail panel ---------- */
+.veil{position:fixed;inset:0;background:rgba(29,36,51,.28);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s}
+.veil.on{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(680px,100%);background:var(--page);z-index:60;transform:translateX(104%);transition:transform .36s cubic-bezier(.2,.85,.2,1);display:flex;flex-direction:column;box-shadow:-24px 0 60px -20px rgba(29,36,51,.4);border-radius:20px 0 0 20px;overflow:hidden}
+.panel.on{transform:none}
+.phead{position:sticky;top:0;z-index:2;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid var(--line)}
+.phead .ttl{flex:1 1 200px;min-width:0}
+.phead h2{font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.3px;overflow-wrap:anywhere}
+.phead p{color:var(--ink2);font-size:13px;margin-top:1px}
+.phead .chiprow{justify-content:flex-start;margin-top:6px}
+.phead .nav{display:flex;gap:6px;flex:none}
+.iconbtn{border:1px solid var(--line);background:#fff;color:var(--ink);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none;box-shadow:var(--shadow)}
+.iconbtn:hover{background:#f6f7fb}
+.iconbtn[disabled]{opacity:.4;cursor:default}
+.iconbtn svg{width:17px;height:17px}
+.pbody{overflow:auto;padding:14px 16px 30px;-webkit-overflow-scrolling:touch;flex:1}
+.pdial{display:flex;align-items:center;gap:16px}
+.pdial .mini{flex:none;width:150px}
+.pdial .mini svg{display:block;width:100%;height:auto;overflow:visible}
+.pdial .pv{font-size:40px;font-weight:700;letter-spacing:-1.2px;line-height:1;font-variant-numeric:tabular-nums}
+.pdial .pl{font-size:13px;color:var(--ink2);margin-top:4px}
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.pk{background:#fff;border-radius:12px;padding:11px 12px;box-shadow:var(--shadow);border:1px solid rgba(231,234,240,.7)}
+.pk .v{font-size:20px;font-weight:700;line-height:1.15;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.pk .l{font-size:12px;color:var(--ink2);margin-top:1px;line-height:1.25}
+.pbody .card{margin-top:12px;padding:16px}
+.cardhead{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.tbox{overflow:auto;max-height:340px;margin-top:12px;border:1px solid var(--line);border-radius:12px}
+table.st{width:100%;border-collapse:collapse;font-size:13px}
+table.st th{position:sticky;top:0;background:#f7f8fb;text-align:right;font-weight:600;color:var(--ink2);padding:0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.st th:first-child,table.st td:first-child{text-align:left}
+table.st th button{border:0;background:transparent;width:100%;text-align:inherit;padding:8px 10px;cursor:pointer;font-weight:600;color:inherit}
+table.st th[aria-sort="ascending"] button,table.st th[aria-sort="descending"] button{color:var(--ink)}
+table.st td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+table.st tr:last-child td{border-bottom:0}
+
+.tip{position:fixed;z-index:90;background:#fff;color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12.5px;pointer-events:none;opacity:0;transition:opacity .12s;max-width:260px;
+  box-shadow:0 2px 4px rgba(29,36,51,.06),0 14px 30px -10px rgba(29,36,51,.32);border:1px solid var(--line)}
+.tip b{font-weight:700;display:block;font-size:15px}
+.tip span{color:var(--ink2)}
+.tip.on{opacity:1}
+
+/* ---------- waiting and error ---------- */
+.state{min-height:58vh;display:grid;place-items:center;padding:30px 0}
+.statecard{background:#fff;border-radius:18px;box-shadow:var(--shadow);border:1px solid rgba(231,234,240,.7);padding:30px 34px;text-align:center;min-width:min(320px,100%)}
+.statecard h2{font-size:19px;margin:14px 0 4px}
+.statecard p{color:var(--ink2);font-size:13.5px;margin-bottom:14px}
+.spinner{width:44px;height:44px;margin:0 auto;border-radius:50%;border:4px solid var(--track);border-top-color:var(--t1);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stateico{width:52px;height:52px;margin:0 auto;border-radius:15px;background:var(--t1a);color:var(--t1);display:grid;place-items:center}
+.stateico svg{width:26px;height:26px}
+.fade{opacity:.5;transition:opacity .2s}
+.intro > *{animation:rise .55s both}
+.intro > *:nth-child(2){animation-delay:.08s}.intro > *:nth-child(n+3){animation-delay:.16s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+@media (max-width:1180px){ .facts6{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:1080px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3 > .card:nth-child(3){grid-column:1 / -1}
+  .split{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:680px){
+  .wrap{padding-left:16px;padding-right:16px}
+  .brand{flex:1 1 200px;gap:10px}
+  .brand h1{font-size:16px}
+  .bolt{width:38px;height:38px;border-radius:11px}
+  .refresh{width:38px;padding:0;justify-content:center}
+  .refresh .word{display:none}
+  .bcard{padding:12px 12px 6px}
+  .bcard .sub3{font-size:11.5px}
+  .brow{grid-template-columns:26px minmax(0,1fr) auto;gap:6px 8px;padding:9px 0}
+  .brow .no{width:24px;height:24px;font-size:11.5px}
+  .brow .t1{font-size:13.5px}
+  .brow .t2{font-size:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bv{align-items:flex-end;gap:2px}
+  .bv b{font-size:18px}
+  .bv .chip{padding:1px 7px;font-size:10.5px}.bv .chip small{display:none}
+  .bvs{font-size:10.5px}
+  .brow .cboxes{grid-column:1 / -1;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-width:none}
+  .cbox{padding:5px 8px;border-radius:10px}
+  .crole{font-size:10px}
+  .cname{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .cline{margin-top:1px}
+  .cnum{font-size:12px}
+  .call{width:26px;height:26px;min-height:0;padding:0;justify-content:center}.call .w{display:none}
+  .bfilter .pills{display:flex;width:100%}.bfilter .pills button{flex:1;padding:6px 4px}
+  .bhead h2{font-size:18px}.bhead .count{font-size:11px}
+  .sechead .chip.s-serious{display:none}
+  .pages{display:flex}.pages button{flex:1;padding:9px 8px}
+  .pdfgo{margin-left:0}
+  .pdfbtn{width:38px;padding:0;justify-content:center}.pdfbtn .word,.pdfbtn svg.chev{display:none}
+  .seg{order:5;flex:1 1 200px;min-width:0}.seg button{flex:1;padding:6px 4px;min-height:34px;min-width:0}
+  .swatches{order:6}
+  .top .wrap{gap:8px 10px;padding-top:8px;padding-bottom:8px}
+  .kpis{gap:10px}
+  .kpi{padding:13px 13px 10px;min-height:0}
+  .kpi .ico{width:34px;height:34px;border-radius:10px}.kpi .ico svg{width:18px;height:18px}
+  .kpi .lab{font-size:12.5px}
+  .kpi .val{font-size:26px;margin-top:8px}
+  .spark{margin:6px -13px -10px}
+  .dialval .v{font-size:50px}
+  .facts6,.stats4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stats3{grid-template-columns:minmax(0,1fr);gap:10px}
+  .stat{padding:10px 11px;gap:9px}.stat .ic{width:30px;height:30px;border-radius:9px}.stat .v{font-size:19px}
+  .duo{grid-template-columns:minmax(0,1fr)}
+  .dcard .mini{width:100px}
+  .grid3{grid-template-columns:minmax(0,1fr)}
+  .grid3 > .card:nth-child(3){grid-column:auto}
+  .hbars.two{grid-template-columns:minmax(0,1fr);grid-auto-flow:row;grid-template-rows:none!important}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .tile{padding:11px 11px 11px;border-radius:16px}
+  .tile .big{font-size:26px}
+  .tile .ring{width:38px;height:38px}.tile .ring i{font-size:10px}
+  .tile .rkb{display:none}
+  .hbar{grid-template-columns:92px minmax(0,1fr) 46px}
+  .rrow{grid-template-columns:30px minmax(0,1fr) 62px}
+  .rrow .trk{display:none}
+  .iconkey{margin-left:0;width:100%}
+  .pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ctrl select,.ctrl input{flex:1 1 44%;width:auto}
+  .card{padding:15px}
+  .agwrap{padding:12px}
+  .panel{border-radius:0}
+  .pdial .mini{width:112px}.pdial .pv{font-size:32px}
+  .donut{width:124px;height:124px}
+  .donutrow{gap:12px}
+  .trend{gap:5px}
+}
+@media (max-width:350px){.tiles{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-theme="sunrise">
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="bolt" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div>
+      <div style="min-width:0">
+        <h1>Bihar 11 kV Feeder Outage</h1>
+        <div class="datepill" id="dateLine"></div>
+      </div>
+    </div>
+    <div class="pdfwrap">
+      <button class="pdfbtn" id="pdfBtn" aria-haspopup="true" aria-expanded="false" aria-controls="pdfMenu" aria-label="Download a PDF report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg><span class="word">PDF</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="pdfmenu" id="pdfMenu" hidden>
+        <button data-pdf="daily"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg></span><span><b>Daily outage</b><span class="s">Today, the last 7 days, SBPDCL and NBPDCL</span></span></button>
+        <button data-pdf="avg"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span><b>Average outage</b><span class="s">SBPDCL and NBPDCL, circle and division wise, highest average outage first</span></span></button>
+        <button data-pdf="bottom"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span><span><b>Highest average outage</b><span class="s">Bottom 5 circles, 10 divisions and 10 feeders, with contact numbers</span></span></button>
+        <button data-pdf="feeders"><span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span><span><b>Most outage</b><span class="s">Feeders of SBPDCL and NBPDCL with the longest total outage</span></span></button>
+      </div>
+    </div>
+    <button class="refresh" id="refreshBtn" aria-label="Refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+      <span class="word">Refresh</span>
+    </button>
+    <div class="seg" id="scopeSeg" role="group" aria-label="Bihar or one DISCOM"></div>
+    <div class="swatches" id="themes" role="group" aria-label="Colour theme"></div>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <nav class="pages" id="pageNav" role="tablist" aria-label="Pages" hidden>
+    <button role="tab" data-page="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-page="bottom" aria-selected="false">Highest Average Outage</button>
+  </nav>
+  <div class="state" id="state"></div>
+  <div id="content" hidden></div>
+</main>
+
+<div class="veil" id="veil"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="pTitle" aria-hidden="true">
+  <div class="phead" id="pHead"></div>
+  <div class="pbody" id="pBody"></div>
+</aside>
+<div class="tip" id="tip" role="status"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="gas-shim.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- settings ---------- */
+var BANDS = [                       // average outage per feeder, in minutes. Each status has a written name.
+  {max:30,       key:'good',    name:'Good',      label:'Up to 30 min'},
+  {max:60,       key:'warn',    name:'Watch',     label:'30 to 60 min'},
+  {max:120,      key:'serious', name:'High',      label:'1 to 2 hrs'},
+  {max:Infinity, key:'crit',    name:'Very high', label:'Over 2 hrs'}
+];
+var DIAL_MAX = 180;                 // the meter runs from 0 to 3 hours
+var STATE_NAME = 'BIHAR';
+var DISCOM_COLOUR = {SBPDCL:'var(--sb)', NBPDCL:'var(--nb)'};
+var THEMES = [{v:'sky', t:'Sky', a:'#2f7df6', b:'#22c1dc'}, {v:'mint', t:'Mint', a:'#0a9b85', b:'#4eb068'},
+              {v:'sunrise', t:'Sunrise', a:'#f0752f', b:'#f7a531'}, {v:'lavender', t:'Lavender', a:'#7a65c2', b:'#e27aab'}];
+var THEME_KEY = 'feeder-outage-theme';
+var ICON = {
+  zap:'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  alert:'<path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4"/><path d="M12 17.2v.3"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  x:'<path d="M5 5l14 14M19 5 5 19"/>',
+  left:'<path d="M15 5l-7 7 7 7"/>',
+  right:'<path d="M9 5l7 7-7 7"/>',
+  plug:'<path d="M9 2v5M15 2v5"/><path d="M6 7h12v4a6 6 0 0 1-12 0V7z"/><path d="M12 17v5"/>',
+  grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+  hour:'<path d="M7 3h10M7 21h10"/><path d="M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/>',
+  top:'<path d="M12 20V6"/><path d="M6 11l6-6 6 6"/><path d="M5 3h14"/>',
+  repeat:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+  tower:'<path d="M12 2 7 22M12 2l5 20M8.5 15h7M9.8 9h4.4"/><path d="M4 7h16"/>',
+  factory:'<path d="M3 21V10l6 4V10l6 4V6h6v15H3z"/>',
+  meter:'<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4"/><path d="M8 3h8"/>',
+  leaf:'<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19 13 11"/>',
+  doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+  wifi:'<path d="M4 9a12 12 0 0 1 16 0M7 12.5a7.5 7.5 0 0 1 10 0M10 16a3 3 0 0 1 4 0"/><path d="M12 19.5v.1"/>'
+};
+/* ---------- contact numbers ----------
+   The numbers are read from the "Contacts" tab of the outage Google Sheet (Discom, Circle, Division, Post, Name, Mobile).
+   Change them there. The list below is used only for a DISCOM that has no lines in that tab.
+   (ESE Supply of each circle and EEE Supply of each division, from the BSPHCL Group telephone directory of 27 Oct 2026;
+   SBPDCL officer names from the SBPDCL HR posting list.) */
+var CONTACTS = {
+  circles: [            // DISCOM, circle, ESE Supply name, ESE Supply mobile
+    ["SBPDCL", "ARRAH", "Sri Sushil Kumar (look-after)", "7763814504"],
+    ["SBPDCL", "AURANGABAD", "Sri Mithilesh Kumar (additional charge)", "9262699604"],
+    ["SBPDCL", "BHAGALPUR", "Sri Sanjay Kumar Bario", "7763814506"],
+    ["SBPDCL", "BIHARSARIF", "Sri Kumar Prashant (additional charge)", "7763814501"],
+    ["SBPDCL", "GAYA JI", "Sri Sandeep Prakash", "7763814502"],
+    ["SBPDCL", "JAMUI", "Sri Kumar Gaurav Pandey", "9262699605"],
+    ["SBPDCL", "MUNGER", "Sri Diwakar Lal", "7763814507"],
+    ["SBPDCL", "PATNA", "Sri Prem Kumar Pravin", "7763814503"],
+    ["SBPDCL", "PESU EAST", "Sri Arvind Kumar-II", "7763814116"],
+    ["SBPDCL", "PESU WEST", "Sri Manish Kant", "7763814049"],
+    ["SBPDCL", "SASARAM", "Sri Indradeo Kumar", "7763814505"],
+    ["NBPDCL", "BEGUSARAI", "ESE Begusarai", "9264438938"],
+    ["NBPDCL", "CHAPRA", "ESE Chapra", "7763815361"],
+    ["NBPDCL", "DARBHANGA", "ESE Darbhanga", "7763815362"],
+    ["NBPDCL", "KISHANGANJ", "ESE Kishanganj", "9264438934"],
+    ["NBPDCL", "MOTIHARI", "ESE Motihari", "7763815360"],
+    ["NBPDCL", "MUZAFFARPUR", "ESE Muzaffarpur", "7763815359"],
+    ["NBPDCL", "PURNEA", "ESE Purnea", "7763815365"],
+    ["NBPDCL", "SAHARSA", "ESE Saharsa", "7763815364"],
+    ["NBPDCL", "SAMASTIPUR", "ESE Samastipur", "7763815363"]
+  ],
+  divisions: [          // DISCOM, circle, division, EEE Supply name, EEE Supply mobile
+    ["SBPDCL", "ARRAH", "ARRAH", "Sri Nikhil Kumar", "7763814264"],
+    ["SBPDCL", "ARRAH", "BUXAR", "Sri Surya Prakash Singh", "7763814281"],
+    ["SBPDCL", "ARRAH", "JAGDISHPUR", "Sri Rakesh Chaudhary", "9264454460"],
+    ["SBPDCL", "AURANGABAD", "ARWAL", "Sri Som Nath Paswan", "7763814294"],
+    ["SBPDCL", "AURANGABAD", "AURANGABAD", "Sri Pankaj Kumar Gupta", "7763814298"],
+    ["SBPDCL", "AURANGABAD", "DAUDNAGAR", "Md. Mukhtar Alam", "9264437052"],
+    ["SBPDCL", "BHAGALPUR", "AMARPUR", "Sri Prakash Kumar Jha", "9262698758"],
+    ["SBPDCL", "BHAGALPUR", "BANKA", "Sri Kumar Saurav", "7763814414"],
+    ["SBPDCL", "BHAGALPUR", "BHAGALPUR(E)", "Sri Prabhat Kumar Ranjan", "7763814423"],
+    ["SBPDCL", "BHAGALPUR", "BHAGALPUR(U)", "Sri Pankaj Kumar", "9264428001"],
+    ["SBPDCL", "BHAGALPUR", "NAUGACHIA", "Sri Pawan Kumar", "9264437059"],
+    ["SBPDCL", "BIHARSARIF", "BIHARSHARIFF RURAL", "Sri Rupak Kumar", "7763814228"],
+    ["SBPDCL", "BIHARSARIF", "BIHARSHARIF-U", "Sri Vikash Kumar-I", "9262699607"],
+    ["SBPDCL", "BIHARSARIF", "EKANGARSARAI", "Sri Neeraj", "7763814575"],
+    ["SBPDCL", "BIHARSARIF", "NAWADA", "Sri Anil Kumar Bharti", "7763814348"],
+    ["SBPDCL", "BIHARSARIF", "RAJAULI", "Sri Sunil Kumar", "7369001355"],
+    ["SBPDCL", "BIHARSARIF", "RAJGIR", "Sri Bipin Kumar", "7763814257"],
+    ["SBPDCL", "GAYA JI", "GAYA JI RURAL", "Sri Binod Kumar", "7763814315"],
+    ["SBPDCL", "GAYA JI", "GAYA JI URBAN", "Sri Azad Kumar Singh", "9262390712"],
+    ["SBPDCL", "GAYA JI", "JAHANABAD", "Sri Nandlal Choudhary", "7763814340"],
+    ["SBPDCL", "GAYA JI", "MANPUR", "Sri Ajay Kumar-III", "8114598870"],
+    ["SBPDCL", "GAYA JI", "SHERGHATI", "Sri Chandan Kumar", "7763814361"],
+    ["SBPDCL", "JAMUI", "JAMUI", "Sri Sanjeev Kumar Gupta", "7763814452"],
+    ["SBPDCL", "JAMUI", "SHEIKHPURA", "Sri Rakesh Kumar", "7763814493"],
+    ["SBPDCL", "MUNGER", "LAKHISARAI", "Sri Sumit Saurav", "7763814465"],
+    ["SBPDCL", "MUNGER", "MUNGER", "Sri Dileep Kumar", "7763814477"],
+    ["SBPDCL", "PATNA", "BARH", "Sri Lakhan Kumar", "7763814180"],
+    ["SBPDCL", "PATNA", "BIHTA", "Sri Abhay Ranjan", "7763814193"],
+    ["SBPDCL", "PATNA", "FATUHA", "Sri Ranjit Kumar", "7763814207"],
+    ["SBPDCL", "PATNA", "MASAURHI", "Sri Pawan Kumar (look-after)", "7763814214"],
+    ["SBPDCL", "PATNA", "PATNA", "Sri Anand Suman", "7763814221"],
+    ["SBPDCL", "PESU EAST", "BANKIPUR", "Sri Sunny Kumar", "7763814127"],
+    ["SBPDCL", "PESU EAST", "GULZARBAGH", "Md. Sajjad Ansari", "7763814136"],
+    ["SBPDCL", "PESU EAST", "KANKARBAGH 1", "Sri Prasannajeet Kumar Sinha", "7763814145"],
+    ["SBPDCL", "PESU EAST", "KANKARBAGH 2", "Sri Brajesh Kumar", "7763813956"],
+    ["SBPDCL", "PESU EAST", "PATNA CITY", "Sri Shiv Shankar Prasad", "7763814159"],
+    ["SBPDCL", "PESU EAST", "RAJENDRA NAGAR", "Sri Amit Kumar", "7763814171"],
+    ["SBPDCL", "PESU WEST", "ASHIYANA", "Sri Ankesh", "9262699609"],
+    ["SBPDCL", "PESU WEST", "DAKBANGLOW", "Sri Vikram Kumar", "7763814060"],
+    ["SBPDCL", "PESU WEST", "DANAPUR", "Sri Anil Kumar", "7763814069"],
+    ["SBPDCL", "PESU WEST", "GARDANIBAGH", "Sri Abhijeet Kumar Saurav", "7763814082"],
+    ["SBPDCL", "PESU WEST", "KHAGAUL", "Sri Anil Kumar", "7369021632"],
+    ["SBPDCL", "PESU WEST", "NEW CAPITAL", "Sri Pushkar Kumar", "7763814091"],
+    ["SBPDCL", "PESU WEST", "PATLIPUTRA", "Sri Abhishek Raj", "7763814104"],
+    ["SBPDCL", "SASARAM", "BHABHUA", "Sri Shashikant Kumar", "7763814370"],
+    ["SBPDCL", "SASARAM", "DEHARI", "Sri Santosh Kumar-IV", "7763814385"],
+    ["SBPDCL", "SASARAM", "SASARAM", "Sri Bravim", "7763814398"],
+    ["NBPDCL", "BEGUSARAI", "BARAUNI", "EEE Barauni", "7763815326"],
+    ["NBPDCL", "BEGUSARAI", "BEGUSARAI", "EEE Begusarai", "7763815325"],
+    ["NBPDCL", "BEGUSARAI", "KHAGARIA", "EEE Khagaria", "7763815330"],
+    ["NBPDCL", "CHAPRA", "CHAPRA-EAST", "EEE Chapra-East", "7763815314"],
+    ["NBPDCL", "CHAPRA", "CHAPRA WEST", "EEE Chapra West", "7763815315"],
+    ["NBPDCL", "CHAPRA", "GOPALGANJ", "EEE Gopalganj", "7763815317"],
+    ["NBPDCL", "CHAPRA", "MAHARAJGANJ", "EEE Maharajganj", "9262696404"],
+    ["NBPDCL", "CHAPRA", "MIRGANJ", "EEE Mirganj", "9262696403"],
+    ["NBPDCL", "CHAPRA", "SIWAN", "EEE Siwan", "7763815316"],
+    ["NBPDCL", "DARBHANGA", "BENIPUR", "EEE Benipur", "7633997825"],
+    ["NBPDCL", "DARBHANGA", "DARBHANGA RURAL", "EEE Darbhanga Rural", "7763815319"],
+    ["NBPDCL", "DARBHANGA", "DARBHANGA URBAN", "EEE Darbhanga Urban", "7763815318"],
+    ["NBPDCL", "DARBHANGA", "JAYNAGAR", "EEE Jaynagar", "9262696402"],
+    ["NBPDCL", "DARBHANGA", "JHANJHARPUR", "EEE Jhanjharpur", "7763815321"],
+    ["NBPDCL", "DARBHANGA", "MADHUBANI", "EEE Madhubani", "7763815320"],
+    ["NBPDCL", "KISHANGANJ", "ARARIA", "EEE Araria", "7763815333"],
+    ["NBPDCL", "KISHANGANJ", "BAHADURGANJ", "EEE Bahadurganj", "7633997829"],   // EEE number given by the user on 29 Oct 2026 (not in the directory)
+    ["NBPDCL", "KISHANGANJ", "FORBESGANJ", "EEE Forbesganj", "7763818391"],   // EEE number given by the user on 29 Oct 2026 (not in the directory)
+    ["NBPDCL", "KISHANGANJ", "KISHANGANJ", "EEE Kishanganj", "7763815332"],
+    ["NBPDCL", "MOTIHARI", "BAGHA", "EEE Bagha", "9065512047"],
+    ["NBPDCL", "MOTIHARI", "BETTIAH", "EEE Bettiah", "7763815312"],
+    ["NBPDCL", "MOTIHARI", "CHAKIA", "EEE Chakia", "7633997826"],
+    ["NBPDCL", "MOTIHARI", "MOTIHARI", "EEE Motihari", "7763815311"],
+    ["NBPDCL", "MOTIHARI", "RAXAUL", "EEE Raxaul", "7763815313"],
+    ["NBPDCL", "MUZAFFARPUR", "MUZAFFARPUR(E)", "EEE Muzaffarpur(E)", "7763815305"],
+    ["NBPDCL", "MUZAFFARPUR", "MUZAFFARPUR(U-I)", "EEE Muzaffarpur(U-I)", "9262398701"],
+    ["NBPDCL", "MUZAFFARPUR", "MUZAFFARPUR(U-II)", "EEE Muzaffarpur(U-II)", "9262398702"],
+    ["NBPDCL", "MUZAFFARPUR", "MUZAFFARPUR(W)", "EEE Muzaffarpur(W)", "9262398703"],
+    ["NBPDCL", "MUZAFFARPUR", "PUPRI", "EEE Pupri", "7633997827"],
+    ["NBPDCL", "MUZAFFARPUR", "SHEOHAR", "EEE Sheohar", "7763815309"],
+    ["NBPDCL", "MUZAFFARPUR", "SITAMARHI", "EEE Sitamarhi", "7763815308"],
+    ["NBPDCL", "PURNEA", "BARSOI", "EEE Barsoi", "7633997830"],   // EEE number given by the user on 29 Oct 2026 (not in the directory)
+    ["NBPDCL", "PURNEA", "KATIHAR", "EEE Katihar", "7763815334"],
+    ["NBPDCL", "PURNEA", "PURNEA_WEST", "EEE Purnea West", "7763815331"],
+    ["NBPDCL", "PURNEA", "PURNEA_EAST", "EEE Purnea East", "9065512043"],
+    ["NBPDCL", "SAHARSA", "MADHEPURA", "EEE Madhepura", "7763815329"],
+    ["NBPDCL", "SAHARSA", "RAGHOPUR", "EEE Raghopur", "9264191635"],
+    ["NBPDCL", "SAHARSA", "SAHARSA", "EEE Saharsa", "7763815327"],
+    ["NBPDCL", "SAHARSA", "SIMRI BAKHTIYARPUR", "EEE Simri Bakhtiyarpur", "9262793174"],
+    ["NBPDCL", "SAHARSA", "SUPAUL", "EEE Supaul", "7763815328"],
+    ["NBPDCL", "SAHARSA", "UDAIKISHANGANJ", "EEE Udaikishanganj", "7763818801"],
+    ["NBPDCL", "SAMASTIPUR", "DALSINGHSARAI", "Chandan Kumar Sinha", "7763815323"],
+    ["NBPDCL", "SAMASTIPUR", "HAJIPUR", "EEE Hajipur", "7763815310"],
+    ["NBPDCL", "SAMASTIPUR", "MAHUA", "EEE Mahua", "9065512041"],   // EEE number given by the user on 29 Oct 2026 (not in the directory)
+    ["NBPDCL", "SAMASTIPUR", "ROSERA", "Raju Kumar", "7763815324"],
+    ["NBPDCL", "SAMASTIPUR", "SAMASTIPUR", "EEE Samastipur", "7763815322"]
+  ]
+};
+var NS = 'http://www.w3.org/2000/svg';
+function icon(name){
+  var s = document.createElementNS(NS, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
+  s.setAttribute('stroke-width', '2.2'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = ICON[name];
+  return s;
+}
+
+/* ---------- small helpers ---------- */
+function el(tag, attrs, kids){
+  var n = document.createElement(tag);
+  if (attrs) for (var k in attrs){
+    if (k === 'text') n.textContent = attrs[k];
+    else if (k === 'class') n.className = attrs[k];
+    else if (k === 'style') { if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute('style', attrs[k]); }
+    else if (k.slice(0,2) === 'on') n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  }
+  (kids || []).forEach(function(c){ if (c !== null && c !== undefined) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+  return n;
+}
+function sv(tag, attrs, kids){
+  var n = document.createElementNS(NS, tag);
+  for (var k in (attrs || {})) n.setAttribute(k, attrs[k]);
+  (kids || []).forEach(function(c){ if (c) n.appendChild(c); });
+  return n;
+}
+function key(s){ return String(s).toLowerCase().replace(/%/g,'pct').replace(/[^a-z0-9]/g,''); }
+function num(v){ var n = (typeof v === 'number') ? v : parseFloat(String(v).replace(/,/g,'')); return isFinite(n) ? n : 0; }
+var nf0 = new Intl.NumberFormat('en-IN', {maximumFractionDigits:0});
+function int(v){ return nf0.format(Math.round(num(v))); }
+function dec(v, d){ d = (d === undefined ? 1 : d); return new Intl.NumberFormat('en-IN', {minimumFractionDigits:d, maximumFractionDigits:d}).format(num(v)); }
+function hhmm(min){ min = Math.max(0, num(min)); var m = Math.floor(min + 1e-6); return nf0.format(Math.floor(m/60)).replace(/,/g, '') + ':' + ('0' + (m % 60)).slice(-2); }
+function band(min){ for (var i=0;i<BANDS.length;i++) if (min <= BANDS[i].max) return BANDS[i]; return BANDS[BANDS.length-1]; }
+function yes(v){ return key(v) === 'yes'; }
+function niceDate(s){
+  var m = /^(\d{1,2})[-\/. ]([A-Za-z]{3})[A-Za-z]*[-\/. ](\d{4})$/.exec(String(s).trim());
+  return m ? (parseInt(m[1],10) + ' ' + m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase() + ' ' + m[3]) : String(s);
+}
+function shortDate(s){ return / x$/.test(String(s)) ? String(s).slice(0, -2) : niceDate(s).replace(/ \d{4}$/, ''); }
+
+/* ---------- the data: every figure is found by its heading ---------- */
+var problems = [];
+function Tab(name, raw){
+  this.name = name; this.rows = (raw && raw.rows) || []; this.idx = {};
+  var self = this;
+  ((raw && raw.head) || []).forEach(function(h, i){ self.idx[key(h)] = i; });
+}
+Tab.prototype.col = function(heading, optional){
+  var k = key(heading);
+  if (k in this.idx) return this.idx[k];
+  if (!optional) problems.push(this.name + ' / ' + heading);
+  return -1;
+};
+Tab.prototype.colLike = function(re, label){
+  for (var k in this.idx) if (re.test(k)) return this.idx[k];
+  problems.push(this.name + ' / ' + label);
+  return -1;
+};
+Tab.prototype.objects = function(map){
+  var cols = {}, self = this;
+  Object.keys(map).forEach(function(f){
+    var h = map[f];
+    cols[f] = (h instanceof RegExp) ? self.colLike(h, f) : (h.charAt(0) === '?' ? self.col(h.slice(1), true) : self.col(h));
+  });
+  return this.rows.map(function(r){
+    var o = {};
+    for (var f in cols) o[f] = cols[f] >= 0 ? r[cols[f]] : '';
+    return o;
+  });
+};
+var M = {discom:'Discom', total:'Total Feeders', n:'Feeders With Outage', pct:'Feeders With Outage %', ev:'Interruptions',
+         min:'Outage Min', avgEv:'Avg Interruption per Feeder', avgMin:'Avg Outage Min per Feeder', mpi:'Min per Interruption',
+         over:/^feedersover\d+hrs$/, many:/^feeders\d+plusinterruptions$/, maxDur:'Longest Outage (HH:MM)', maxEv:'Most Interruptions'};
+function ext(a, b){ var o = {}; for (var k in a) o[k] = a[k]; for (var j in b) o[j] = b[j]; return o; }
+
+var DATA = null, scope = STATE_NAME, firstDraw = true;
+var ui = {sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
+          ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'overview', bfilter:'all'};
+try { if (window.localStorage.getItem('feeder-outage-page') === 'bottom') ui.page = 'bottom'; var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
+
+function buildOne(payload){                  // the figures of one DISCOM
+  var t = {};
+  ['Summary','Circle','Division','Substation','Feeder Type','Outage Bands','Interruption Bands','Over 4 Hrs','Feeder Ranks','33 kV','Day Wise']
+    .forEach(function(nm){ t[nm] = new Tab(nm, payload.tabs[nm]); });
+  var d = {};
+  d.summary = t['Summary'].objects(ext(M, {from:'Data From', upto:'Data Up To', days:'Days', v33:'33 kV Feeders With Outage',
+               agri:'Agriculture Feeders With Outage', ind:'Industrial Feeders Left Out', o24:'Over 24 Hrs Left Out', divisions:'?Divisions'}));
+  d.circles = t['Circle'].objects(ext(M, {circle:'Circle', received:'Data Received'}));
+  d.divisions = t['Division'].objects(ext(M, {circle:'Circle', division:'Division', src:'Feeder Count From', received:'Data Received', big:'Big Enough To Rank'}));
+  d.subs = t['Substation'].objects({discom:'Discom', circle:'Circle', division:'Division', name:'Substation',
+               n:'Feeders With Outage', ev:'Interruptions', min:'Outage Min', avgEv:'Avg Interruption per Feeder With Outage',
+               avgMin:'Avg Outage Min per Feeder With Outage', over:/^feedersover\d+hrs$/, big:'Big Enough To Rank'});
+  d.types = t['Feeder Type'].objects({discom:'Discom', circle:'Circle', division:'Division', type:'Feeder Type', counted:'Counted In Averages',
+               n:'Feeders With Outage', ev:'Interruptions', min:'Outage Min', over:/^feedersover\d+hrs$/});
+  d.obands = t['Outage Bands'].objects({discom:'Discom', circle:'Circle', no:'Band No', band:'Outage Band', n:'Feeders'});
+  d.ibands = t['Interruption Bands'].objects({discom:'Discom', circle:'Circle', no:'Band No', band:'Interruption Band', n:'Feeders'});
+  var F = {discom:'Discom', circle:'Circle', division:'Division', ss:'Substation', feeder:'Feeder', type:'Feeder Type', ev:'Interruptions', min:'Outage Min'};
+  d.over = t['Over 4 Hrs'].objects(F);
+  d.ranks = t['Feeder Ranks'].objects(ext(F, {listFor:'List For', measure:'Measure', side:'Side', rank:'Rank', mpi:'Min per Interruption'}));
+  d.v33 = t['33 kV'].objects({discom:'Discom', circle:'Circle', division:'Division', n:'Feeders With Outage', ev:'Interruptions', min:'Outage Min'});
+  d.agri = payload.tabs['Agriculture'] ? new Tab('Agriculture', payload.tabs['Agriculture']).objects({discom:'Discom', circle:'Circle', division:'Division',
+               n:'Feeders With Outage', ev:'Interruptions', min:'Outage Min', over:/^feedersover\d+hrs$/, moved:'Moved By Type List'}) : null;
+  d.agriF = payload.tabs['Agriculture Feeders'] ? new Tab('Agriculture Feeders', payload.tabs['Agriculture Feeders']).objects({discom:'Discom', circle:'Circle', division:'Division',
+               ss:'Substation', feeder:'Feeder', ev:'Interruptions', min:'Outage Min', typeInFile:'Type In File', moved:'Moved By Type List'}) : null;
+  var H = {day:'Day No', date:'Date', discom:'Discom', total:'Total Feeders', n:'Feeders With Outage', ev:'Interruptions', min:'Outage Min', over:/^feedersover\d+hrs$/};
+  d.hDays = payload.tabs['History Days'] ? new Tab('History Days', payload.tabs['History Days']).objects(H).map(rates) : [];
+  d.hDiv = payload.tabs['History Divisions'] ? new Tab('History Divisions', payload.tabs['History Divisions']).objects(ext(H, {circle:'Circle', division:'Division'})).map(rates) : [];
+  d.days = payload.tabs['Day Wise'] ? t['Day Wise'].objects({date:'Date', discom:'Discom', avgMin:'Avg Outage Min per Feeder', total:'Total Feeders', min:'Outage Min',
+               n:'?Feeders With Outage', pct:'?Feeders With Outage %', ev:'?Interruptions', avgEv:'?Avg Interruption per Feeder', mpi:'?Min per Interruption', over:'?Feeders Over 4 Hrs'}) : [];
+  return d;
+}
+function rates(r){                           // the averages of one day, worked out from the totals kept in the history
+  var t = num(r.total), m = num(r.min), e = num(r.ev);
+  r.day = num(r.day); r.avgMin = t ? m / t : 0; r.avgEv = t ? e / t : 0; r.pct = t ? 100 * num(r.n) / t : 0; r.mpi = e ? m / e : 0;
+  return r;
+}
+function dayOf(s){                             // '10-Oct-2026' as a day number
+  var m = /^(\d{1,2})[-\/. ]([A-Za-z]{3})[A-Za-z]*[-\/. ](\d{4})$/.exec(String(s).trim());
+  if (!m) return 0;
+  var mi = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].toLowerCase());
+  return mi < 0 ? 0 : Math.round(Date.UTC(+m[3], mi, +m[1]) / 86400000) + 25569;
+}
+function ready(p){ return !!(p && p.tabs) && ['Summary','Circle','Division'].every(function(n){ return p.tabs[n] && p.tabs[n].rows.length; }); }
+function clockMin(s){ var m = /^(\d+):(\d{2})/.exec(String(s)); return m ? (+m[1]) * 60 + (+m[2]) : 0; }
+
+/* each DISCOM keeps its own figures; here they are put side by side and the Bihar figures are worked out */
+function build(payload){
+  problems = [];
+  var parts = [];
+  (payload.order || Object.keys(payload.discoms || {})).forEach(function(name){
+    var p = (payload.discoms || {})[name];
+    if (!ready(p)) return;
+    var before = problems.length, one = buildOne(p);
+    if (problems.length > before){ note('figures not found for ' + name, problems.slice(before)); return; }     // this DISCOM is left out, the other is still shown
+    one.summary = one.summary.filter(function(r){ return String(r.discom) !== STATE_NAME; }).slice(0, 1);
+    if (one.summary.length) parts.push(one);
+  });
+  var broken = Object.keys(payload.discoms || {}).some(function(n){ return payload.discoms[n] && payload.discoms[n].error; });
+  if (!parts.length) return (problems.length || broken) ? false : null;
+  problems = [];
+  var d = {};
+  ['summary','circles','divisions','subs','types','obands','ibands','over','ranks','v33','days','hDays','hDiv'].forEach(function(k){
+    d[k] = []; parts.forEach(function(p){ d[k] = d[k].concat(p[k] || []); });
+  });
+  ['agri','agriF'].forEach(function(k){
+    d[k] = parts.some(function(p){ return p[k]; }) ? [] : null;
+    parts.forEach(function(p){ if (p[k]) d[k] = d[k].concat(p[k]); });
+  });
+  d.ranks = d.ranks.filter(function(r){ return String(r.listFor) !== STATE_NAME; });
+  d.days = d.days.filter(function(r){ return String(r.discom) !== STATE_NAME; });
+  var S = d.summary, first = S[0];
+  var sameDay = S.length > 1 && S.every(function(r){
+    return String(r.upto) === String(first.upto) && String(r.from) === String(first.from) && num(r.days) === num(first.days);
+  });
+  if (sameDay){                                 // Bihar is shown only when both DISCOMs hold the same day
+    var sum = function(f){ return S.reduce(function(a, r){ return a + num(r[f]); }, 0); };
+    var den = sum('total') * num(first.days), longest = S.slice().sort(function(a, b){ return clockMin(b.maxDur) - clockMin(a.maxDur); })[0];
+    var B = {discom:STATE_NAME, from:first.from, upto:first.upto, days:first.days, total:sum('total'), n:sum('n'), ev:sum('ev'), min:sum('min'),
+             over:sum('over'), many:sum('many'), divisions:sum('divisions'), v33:sum('v33'), agri:sum('agri'), ind:sum('ind'), o24:sum('o24'),
+             maxDur:longest.maxDur, maxEv:Math.max.apply(null, S.map(function(r){ return num(r.maxEv); }))};
+    B.pct = den ? 100 * B.n / den : 0; B.avgEv = den ? B.ev / den : 0; B.avgMin = den ? B.min / den : 0; B.mpi = B.ev ? B.min / B.ev : 0;
+    d.summary = [B].concat(S);
+    var lists = d.ranks.filter(function(r){ return key(r.listFor) !== 'division'; }), extra = [];
+    var top = lists.reduce(function(a, r){ return Math.max(a, num(r.rank)); }, 0);
+    [['Outage','min','ev'], ['Interruptions','ev','min'], ['Min per Interruption','mpi','min']].forEach(function(m){
+      ['Top','Bottom'].forEach(function(side){
+        var g = side === 'Top' ? -1 : 1;
+        lists.filter(function(r){ return String(r.measure) === m[0] && String(r.side) === side; })
+          .sort(function(a, b){
+            return g * (num(a[m[1]]) - num(b[m[1]])) || g * (num(a[m[2]]) - num(b[m[2]])) ||
+                   String(a.circle).localeCompare(String(b.circle)) || String(a.division).localeCompare(String(b.division)) || String(a.feeder).localeCompare(String(b.feeder));
+          })
+          .slice(0, top).forEach(function(r, i){ extra.push(ext(r, {listFor:STATE_NAME, rank:i + 1})); });
+      });
+    });
+    d.ranks = extra.concat(d.ranks);
+    var byDay = {}, order = [];
+    d.days.forEach(function(r){ var k = String(r.date); if (!byDay[k]){ byDay[k] = []; order.push(k); } byDay[k].push(r); });
+    var all = [];
+    order.forEach(function(k){
+      var rows = byDay[k];
+      if (rows.length === S.length){
+        var add = function(f){ return rows.reduce(function(a, r){ return a + num(r[f]); }, 0); };
+        var tot = add('total'), mins = add('min'), ev = add('ev'), nn = add('n');
+        all.push({date:rows[0].date, discom:STATE_NAME, total:tot, min:mins, avgMin: tot ? mins / tot : 0, n:nn, ev:ev, over:add('over'),
+                  pct: tot ? 100 * nn / tot : 0, avgEv: tot ? ev / tot : 0, mpi: ev ? mins / ev : 0});
+      }
+    });
+    d.days = all.concat(d.days);
+    var hd = {};                                  // Bihar history: the days that both DISCOMs have
+    d.hDays.forEach(function(r){ (hd[r.day] = hd[r.day] || []).push(r); });
+    Object.keys(hd).forEach(function(k){
+      var rows = hd[k];
+      if (rows.length !== S.length) return;
+      var add = function(f){ return rows.reduce(function(a, r){ return a + num(r[f]); }, 0); };
+      d.hDays.push(rates({day:rows[0].day, date:rows[0].date, discom:STATE_NAME, total:add('total'), n:add('n'), ev:add('ev'), min:add('min'), over:add('over')}));
+    });
+  }
+  d.hDivBy = {};
+  d.hDiv.forEach(function(r){ var k = divKey(r); (d.hDivBy[k] = d.hDivBy[k] || []).push(r); });
+  d.scopes = d.summary.map(function(r){ return String(r.discom); });
+  return d;
+}
+
+
+/* ---------- waiting and error ---------- */
+var $state = document.getElementById('state'), $content = document.getElementById('content');
+function showState(kind){
+  $content.hidden = true; document.getElementById('pageNav').hidden = true; $state.hidden = false; $state.textContent = '';
+  var card = el('div', {class:'statecard', role:'status'});
+  if (kind === 'loading'){
+    card.appendChild(el('div', {class:'spinner', 'aria-hidden':'true'}));
+    card.appendChild(el('h2', {text:'Loading'}));
+  } else {
+    card.appendChild(el('div', {class:'stateico'}, [icon(kind === 'empty' ? 'cal' : 'alert')]));
+    card.appendChild(el('h2', {text: kind === 'empty' ? 'No data yet' : 'Could not load the data'}));
+    card.appendChild(el('p', {text: kind === 'empty' ? 'The figures will show here once a report is sent.' : 'Please try again in a moment.'}));
+    card.appendChild(el('button', {class:'btn go', text:'Try again', onclick:load}));
+  }
+  $state.appendChild(card);
+}
+function note(what, detail){ try { console.warn('[dashboard] ' + what, detail || ''); } catch (e) {} }
+function load(){
+  if (DATA) $content.classList.add('fade'); else showState('loading');
+  google.script.run.withSuccessHandler(function(p){
+    $content.classList.remove('fade');
+    if (!p || !p.ok || !p.discoms){ note('load failed', p); showState('error'); return; }
+    var d = build(p);
+    if (d === false){ showState('error'); return; }
+    if (!d){ note('nothing to show yet', p); showState('empty'); return; }
+    DATA = d;
+    var cs = {}; Object.keys(p.discoms).forEach(function(dn){ cs[dn] = p.discoms[dn] ? p.discoms[dn].contacts : null; }); setContacts(cs);
+    if (DATA.scopes.indexOf(scope) < 0) scope = DATA.scopes[0];
+    $state.hidden = true; $content.hidden = false; document.getElementById('pageNav').hidden = false;
+    render();
+  }).withFailureHandler(function(err){
+    $content.classList.remove('fade'); note('load failed', err);
+    showState('error');
+  }).getDashboardData();
+}
+document.getElementById('refreshBtn').addEventListener('click', function(){ this.classList.toggle('spin'); load(); });
+
+/* ---------- colour themes ---------- */
+function hex(h){ h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function mix(a, b, w){        // w = share of b
+  var x = hex(a), y = hex(b);
+  return '#' + x.map(function(v, i){ return ('0' + Math.round(v + (y[i] - v) * w).toString(16)).slice(-2); }).join('');
+}
+function rgba(h, a){ var x = hex(h); return 'rgba(' + x.join(',') + ',' + a + ')'; }
+(function(){
+  var box = document.getElementById('themes'), saved = null, root = document.documentElement;
+  try { saved = window.localStorage.getItem(THEME_KEY); } catch (e) {}
+  function apply(v){
+    var t = THEMES.filter(function(x){ return x.v === v; })[0] || THEMES[2];
+    document.body.setAttribute('data-theme', t.v);
+    var set = function(k, val){ root.style.setProperty(k, val); };
+    set('--t1', t.a); set('--t2', t.b); set('--t1a', rgba(t.a, .16)); set('--t2a', rgba(t.b, .14)); set('--t1s', rgba(t.a, .09));
+    [mix('#ffffff', t.a, .42), mix('#ffffff', t.a, .62), mix('#ffffff', t.a, .82), t.a, mix(t.a, '#1d2433', .18), mix(t.a, '#1d2433', .34), mix(t.a, '#1d2433', .5)]
+      .forEach(function(c, i){ set('--r' + (i + 1), c); });
+    [mix('#ffffff', t.b, .45), mix('#ffffff', t.b, .72), t.b, mix(t.b, '#1d2433', .22), mix(t.b, '#1d2433', .42)]
+      .forEach(function(c, i){ set('--q' + (i + 1), c); });
+    Array.prototype.forEach.call(box.children, function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === t.v)); });
+    try { window.localStorage.setItem(THEME_KEY, t.v); } catch (e) {}
+  }
+  THEMES.forEach(function(t){
+    box.appendChild(el('button', {'data-v':t.v, title:t.t, 'aria-label':t.t + ' theme', style:'background:linear-gradient(135deg,' + t.a + ',' + t.b + ')', onclick:function(){ apply(t.v); }}));
+  });
+  apply(THEMES.some(function(t){ return t.v === saved; }) ? saved : 'sunrise');
+})();
+
+/* ---------- tooltip + motion ---------- */
+var $tip = document.getElementById('tip');
+function tipOn(node, title, text){
+  node.setAttribute('tabindex', node.getAttribute('tabindex') || '0');
+  node.setAttribute('aria-label', title + ': ' + text);
+  function show(x, y){
+    $tip.textContent = ''; $tip.appendChild(el('b', {text:text})); $tip.appendChild(el('span', {text:title}));
+    $tip.classList.add('on');
+    var w = $tip.offsetWidth, h = $tip.offsetHeight;
+    $tip.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, x - w/2)) + 'px';
+    $tip.style.top = Math.max(6, y - h - 12) + 'px';
+  }
+  node.addEventListener('pointermove', function(e){ show(e.clientX, e.clientY); });
+  node.addEventListener('pointerleave', function(){ $tip.classList.remove('on'); });
+  node.addEventListener('focus', function(){ var r = node.getBoundingClientRect(); show(r.left + r.width/2, r.top); });
+  node.addEventListener('blur', function(){ $tip.classList.remove('on'); });
+}
+function grow(){ requestAnimationFrame(function(){ requestAnimationFrame(function(){
+  document.querySelectorAll('[data-w]').forEach(function(n){ n.style.width = n.getAttribute('data-w'); });
+  document.querySelectorAll('[data-h]').forEach(function(n){ n.style.height = n.getAttribute('data-h'); });
+  document.querySelectorAll('[data-off]').forEach(function(n){ n.style.strokeDashoffset = n.getAttribute('data-off'); });
+  document.querySelectorAll('[data-dash]').forEach(function(n){ n.style.strokeDasharray = n.getAttribute('data-dash'); });
+  document.querySelectorAll('[data-rot]').forEach(function(n){ n.style.transform = 'rotate(' + n.getAttribute('data-rot') + 'deg)'; });
+}); }); }
+var still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function countUp(node, to, fmt){
+  if (still || !firstDraw){ node.textContent = fmt(to); return; }
+  var t0 = null, dur = 900;
+  node.textContent = fmt(0);
+  function step(t){ if (t0 === null) t0 = t; var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3); node.textContent = fmt(to * e); if (p < 1) requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+
+/* ---------- drawn pieces ---------- */
+var gradNo = 0;
+function dial(min, big){
+  // half-circle meter: grey track, value arc in the theme colours, needle
+  var W = 300, R = 116, cx = 150, cy = 138, sw = big ? 20 : 26;
+  var f = Math.min(1, Math.max(0, num(min) / DIAL_MAX)), len = Math.PI * R, gid = 'dg' + (++gradNo);
+  var svg = sv('svg', {viewBox:'0 0 ' + W + ' 156', role:'img', 'aria-label':'Average outage per feeder ' + hhmm(min) + ', ' + band(min).name});
+  var gr = sv('linearGradient', {id:gid, x1:'0', y1:'0', x2:'1', y2:'0'});
+  gr.appendChild(sv('stop', {offset:'0', style:'stop-color:var(--t1)'})); gr.appendChild(sv('stop', {offset:'1', style:'stop-color:var(--t2)'}));
+  svg.appendChild(sv('defs', null, [gr]));
+  var d = 'M' + (cx - R) + ' ' + cy + ' A' + R + ' ' + R + ' 0 0 1 ' + (cx + R) + ' ' + cy;
+  svg.appendChild(sv('path', {d:d, fill:'none', stroke:'var(--track)', 'stroke-width':sw, 'stroke-linecap':'round'}));
+  var off = (len * (1 - f)).toFixed(2);
+  var arc = sv('path', {class:'arcv', d:d, fill:'none', stroke:'url(#' + gid + ')', 'stroke-width':sw, 'stroke-linecap':'round',
+                        'stroke-dasharray':len.toFixed(2), 'data-off':off});
+  arc.style.strokeDashoffset = (still || !firstDraw) ? off : len.toFixed(2);
+  if (f > 0) svg.appendChild(arc);
+  if (big){
+    [[0,'0'], [0.25,'0:45'], [0.5,'1:30'], [0.75,'2:15'], [1,'3:00']].forEach(function(t){
+      var a = Math.PI * (1 - t[0]), r1 = R - sw / 2 - 5, r2 = R - sw / 2 - 11, r3 = R - sw / 2 - 24, end = (t[0] === 0 || t[0] === 1);
+      if (!end) svg.appendChild(sv('line', {x1:cx + r1 * Math.cos(a), y1:cy - r1 * Math.sin(a), x2:cx + r2 * Math.cos(a), y2:cy - r2 * Math.sin(a), stroke:'var(--faint)', 'stroke-width':2, 'stroke-linecap':'round'}));
+      var tx = end ? sv('text', {x:cx + R * Math.cos(a), y:cy + sw / 2 + 14, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink2)', 'font-weight':500})
+                   : sv('text', {x:cx + r3 * Math.cos(a), y:cy - r3 * Math.sin(a) + 4, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink2)', 'font-weight':500});
+      tx.textContent = t[1]; svg.appendChild(tx);
+    });
+  }
+  var deg = -90 + 180 * f;
+  var g = sv('g', {class:'needle', 'data-rot':deg.toFixed(1)});
+  g.style.transformOrigin = cx + 'px ' + cy + 'px';
+  g.style.transform = 'rotate(' + ((still || !firstDraw) ? deg.toFixed(1) : -90) + 'deg)';
+  g.appendChild(sv('path', {d:'M' + (cx - 5) + ' ' + cy + ' L' + cx + ' ' + (cy - R + (big ? 42 : 30)) + ' L' + (cx + 5) + ' ' + cy + ' Z', fill:'var(--ink)'}));
+  svg.appendChild(g);
+  svg.appendChild(sv('circle', {cx:cx, cy:cy, r:11, fill:'var(--ink)'}));
+  svg.appendChild(sv('circle', {cx:cx, cy:cy, r:4.5, fill:'#fff'}));
+  return svg;
+}
+function ring(pct, colour, track, sw){
+  var r = 50 - sw / 2 - 1, c = 2 * Math.PI * r, off = c * (1 - Math.min(1, Math.max(0, pct / 100)));
+  var svg = sv('svg', {viewBox:'0 0 100 100', 'aria-hidden':'true'});
+  svg.style.transform = 'rotate(-90deg)'; svg.style.display = 'block';
+  svg.appendChild(sv('circle', {cx:50, cy:50, r:r, fill:'none', stroke:track, 'stroke-width':sw}));
+  var fg = sv('circle', {class:'ringc', cx:50, cy:50, r:r, fill:'none', stroke:colour, 'stroke-width':sw, 'stroke-linecap':'round', 'stroke-dasharray':c.toFixed(2), 'data-off':off.toFixed(2)});
+  fg.style.strokeDashoffset = c.toFixed(2);
+  svg.appendChild(fg);
+  return svg;
+}
+function spark(values, colour){
+  var max = Math.max.apply(null, values.concat([1e-9])), min = Math.min.apply(null, values), span = (max - min) || max || 1;
+  var pts = values.map(function(v, i){ return [(100 * i / (values.length - 1)).toFixed(2), (36 - 30 * (v - min) / span).toFixed(2)]; });
+  var line = 'M' + pts.map(function(p){ return p.join(' '); }).join(' L');
+  var svg = sv('svg', {viewBox:'0 0 100 40', preserveAspectRatio:'none', 'aria-hidden':'true'});
+  svg.appendChild(sv('path', {d:line + ' L100 40 L0 40 Z', fill:colour, opacity:.14}));
+  svg.appendChild(sv('path', {d:line, fill:'none', stroke:colour, 'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round', 'vector-effect':'non-scaling-stroke'}));
+  return el('div', {class:'spark'}, [svg]);
+}
+function donut(items, midTop, midSub, unit){      // items: {name, value, colour}
+  var total = items.reduce(function(a, i){ return a + i.value; }, 0) || 1, r = 40, c = 2 * Math.PI * r, gapLen = 2.4, at = 0;
+  var svg = sv('svg', {viewBox:'0 0 100 100', role:'img', 'aria-label':midSub});
+  svg.appendChild(sv('circle', {cx:50, cy:50, r:r, fill:'none', stroke:'var(--track)', 'stroke-width':15}));
+  items.forEach(function(i){
+    var len = c * i.value / total;
+    if (len <= 0) return;
+    var show = Math.max(0.6, len - gapLen);
+    var seg = sv('circle', {class:'seg', cx:50, cy:50, r:r, fill:'none', stroke:i.colour, 'stroke-width':15, 'stroke-dashoffset':(-at).toFixed(2),
+      'data-dash': show.toFixed(2) + ' ' + (c - show).toFixed(2)});
+    seg.style.strokeDasharray = '0 ' + c.toFixed(2);
+    tipOn(seg, i.name + ', ' + dec(100 * i.value / total, 1) + '%', int(i.value) + ' ' + unit);
+    svg.appendChild(seg);
+    at += len;
+  });
+  return el('div', {class:'donutrow'}, [
+    el('div', {class:'donut'}, [svg, el('div', {class:'mid'}, [el('div', null, [el('b', {text:midTop}), el('span', {text:midSub})])])]),
+    el('div', {class:'dlist'}, items.map(function(i){
+      return el('div', null, [el('i', {class:'sw', style:'background:' + i.colour}), el('span', {class:'n', text:i.name, title:i.name}),
+        el('b', {text:int(i.value)}), el('em', {text:dec(100 * i.value / total, 1) + '%'})]);
+    }))
+  ]);
+}
+function inScope(r){ return scope === STATE_NAME || String(r.discom) === scope; }
+function multiDay(){ var r = DATA && DATA.summary.filter(function(x){ return String(x.discom) === scope; })[0]; return !!r && num(r.days) > 1; }
+function colourOf(discom){ return DISCOM_COLOUR[String(discom)] || 'var(--t1)'; }
+function pills(options, current, onPick, label){
+  return el('div', {class:'pills', role:'group', 'aria-label':label}, options.map(function(o){
+    var v = (typeof o === 'object') ? o.v : o, t = (typeof o === 'object') ? o.t : String(o);
+    return el('button', {text:t, 'aria-pressed': String(v === current), onclick:function(){ onPick(v); }});
+  }));
+}
+function select(label, options, current, onPick){
+  var s = el('select', {'aria-label':label, onchange:function(){ onPick(s.value); }}, options.map(function(o){
+    var op = el('option', {value:o.v, text:o.t}); if (o.v === current) op.selected = true; return op;
+  }));
+  return s;
+}
+function bar(pct, colour, cls){
+  return el('div', {class:'trk' + (cls ? ' ' + cls : '')}, [el('div', {class:'fill', style:'--bc:' + colour, 'data-w':Math.max(0, Math.min(100, pct)).toFixed(1) + '%'})]);
+}
+function hbars(items, fmt, title, two){      // items: {name, value, colour, sub}
+  var max = Math.max.apply(null, items.map(function(i){ return i.value; }).concat([1e-9]));
+  var wide = two && items.length > 6;
+  return el('div', {class:'hbars' + (wide ? ' two' : ''), style: wide ? 'grid-template-rows:repeat(' + Math.ceil(items.length / 2) + ',auto)' : null}, items.map(function(i){
+    var row = el('div', {class:'hbar'}, [el('div', {class:'nm', text:i.name, title:i.name}), bar(100 * i.value / max, i.colour), el('div', {class:'vl', text:fmt(i.value)})]);
+    tipOn(row, i.name + (i.sub ? ', ' + i.sub : '') + ', ' + title, fmt(i.value));
+    return row;
+  }));
+}
+function columns(items, unit, fmt, title){     // items: {name, value, colour}
+  fmt = fmt || int;
+  var max = Math.max.apply(null, items.map(function(i){ return i.value || 0; }).concat([1e-9]));
+  var total = items.reduce(function(a, i){ return a + (i.value || 0); }, 0) || 1;
+  var box = el('div', {class: title ? 'trend' : 'cols'}, items.map(function(i){
+    if (i.value === null){
+      var g = el('div', {class:'colw gap'}, [el('div', {class:'cv', text:'\u2013'}), el('div', {class:'bar none'})]);
+      tipOn(g, i.name, 'No report'); return g;
+    }
+    var c = el('div', {class:'colw'}, [el('div', {class:'cv', text:fmt(i.value)}),
+              el('div', {class:'bar', style: i.colour ? '--bc:' + i.colour : null, 'data-h': (100 * i.value / max * 0.84).toFixed(1) + '%'})]);
+    if (title) tipOn(c, i.name + ', ' + title, fmt(i.value));
+    else tipOn(c, i.name + ', ' + dec(100 * i.value / total, 1) + '%', int(i.value) + ' ' + unit);
+    return c;
+  }));
+  return el('div', null, [box, el('div', {class:'collabs'}, items.map(function(i){ return el('div', {text:i.name}); }))]);
+}
+function sumBands(rows, labelField){
+  var m = {};
+  rows.filter(inScope).forEach(function(r){
+    var k = num(r.no);
+    if (!m[k]) m[k] = {name:String(r[labelField]), value:0, no:k};
+    m[k].value += num(r.n);
+  });
+  return Object.keys(m).map(function(k){ return m[k]; }).sort(function(a, b){ return a.no - b.no; });
+}
+function chip(b){
+  return el('span', {class:'chip s-' + b.key}, [el('i', {class:'dt', 'aria-hidden':'true'}), b.name, el('small', {text:b.label})]);
+}
+function dChip(discom){ return el('span', {class:'chip dchip', style:'--dc:' + colourOf(discom)}, [el('i', {class:'dt', 'aria-hidden':'true'}), String(discom)]); }
+function stat(ic, label, value, sub){
+  return el('div', {class:'stat'}, [el('div', {class:'ic'}, [icon(ic)]),
+    el('div', {style:'min-width:0'}, [el('div', {class:'l', text:label}), el('div', {class:'v', text:value}), sub ? el('div', {class:'s', text:sub}) : null])]);
+}
+function moveText(now, before, fmt, when){
+  var x = num(now) - num(before);
+  if (Math.abs(x) < 1e-9) return 'Same as ' + when;
+  return (x > 0 ? 'Up ' : 'Down ') + fmt(Math.abs(x)) + ' from ' + when;
+}
+var TC = {Rural:'var(--ft1)', Urban:'var(--ft2)', Mixed:'var(--ft3)', Industrial:'var(--ft4)'};
+function typeGroups(rows){
+  var types = {};
+  rows.forEach(function(r){
+    var nm = TC[String(r.type)] ? String(r.type) : 'Other';        // the small kinds (Dedicated, Others, not given) go together
+    var t = types[nm] || (types[nm] = {type:nm, n:0, ev:0, min:0});
+    t.n += num(r.n); t.ev += num(r.ev); t.min += num(r.min);
+  });
+  return Object.keys(types).map(function(x){ return types[x]; }).sort(function(a, b){ return (a.type === 'Other') - (b.type === 'Other') || b.n - a.n; });
+}
+function typeColour(t){ return TC[t] || 'var(--nodata)'; }
+
+/* ---------- the last 7 days ---------- */
+function week(rows, upto){                     // seven slots ending on the day shown; a day with no report stays empty
+  var end = dayOf(upto), by = {};
+  rows.forEach(function(r){ by[r.day] = r; });
+  var out = [];
+  for (var k = end - 6; k <= end; k++){
+    var dt = new Date((k - 25569) * 86400000);
+    out.push({day:k, name:dt.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getUTCMonth()], r:by[k] || null});
+  }
+  return out;
+}
+function have(slots){ return slots.filter(function(x){ return x.r; }); }
+function uptoOf(discom){ var r = DATA.summary.filter(function(x){ return String(x.discom) === String(discom); })[0]; return r ? r.upto : ''; }
+function divWeek(r){ return week(DATA.hDivBy[divKey(r)] || [], uptoOf(r.discom)); }
+
+/* ---------- the page ---------- */
+function render(){
+  var d = DATA, S = d.summary.filter(function(r){ return String(r.discom) === scope; })[0];
+  var $c = $content; $c.textContent = ''; $c.className = firstDraw ? 'intro' : '';
+  var days = num(S.days), perDay = days > 1 ? ' per day' : '';
+  var dayRows = d.days.filter(function(r){ return String(r.discom) === scope; });
+  var wk = week(d.hDays.filter(function(r){ return String(r.discom) === scope; }), S.upto), wkHave = have(wk);
+  var fromHistory = wkHave.length > 1 && wkHave[wkHave.length - 1].day === dayOf(S.upto);
+  var series = fromHistory ? wkHave.map(function(x){ var r = x.r; r.date = x.name + ' x'; return r; }) : dayRows;
+  var last = series[series.length - 1], prev = series.length > 1 ? series[series.length - 2] : null;
+
+  document.getElementById('dateLine').textContent = 'As on ' + niceDate(S.upto) + (days > 1 ? ', from ' + shortDate(S.from) + ' (' + days + ' days)' : '');
+  var seg = document.getElementById('scopeSeg'); seg.textContent = '';
+  d.scopes.forEach(function(s){
+    seg.appendChild(el('button', {text: s === STATE_NAME ? 'Bihar' : s, 'aria-pressed': String(s === scope),
+      onclick:function(){ scope = s; ui.circle = ''; ui.band = ''; render(); window.scrollTo({top:0, behavior:'smooth'}); }}));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#pageNav button'), function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-page') === ui.page)); });
+  if (ui.page === 'bottom'){ renderBottom($c); grow(); firstDraw = false; return; }
+
+  /* the meter and four figures */
+  var hv = el('span', {class:'v'});
+  countUp(hv, num(S.avgMin), hhmm);
+  var b0 = band(num(S.avgMin));
+  var dialCard = el('div', {class:'card dialcard'}, [
+    el('div', {class:'dialbox'}, [dial(num(S.avgMin), true)]),
+    el('div', {class:'dialval'}, [el('div', null, [hv, el('span', {class:'u', text:'hr:min'})]), el('div', {class:'l', text:'Average outage per feeder' + perDay})]),
+    el('div', {class:'chiprow'}, [chip(b0), prev ? el('span', {class:'chip', text:moveText(last.avgMin, prev.avgMin, hhmm, shortDate(prev.date))}) : null])
+  ]);
+  function kpi(cls, ic, label, value, fmt, sub, field){
+    var v = el('div', {class:'val'}); countUp(v, value, fmt);
+    var kids = [el('div', {class:'kh'}, [el('div', {class:'ico'}, [icon(ic)]), el('div', {class:'lab', text:label})]), v, el('div', {class:'sub', text:sub})];
+    if (prev && field) kids.push(el('div', {class:'move', text:moveText(last[field], prev[field], fmt, shortDate(prev.date))}));
+    if (series.length > 1 && field) kids.push(spark(series.map(function(r){ return num(r[field]); }), 'var(--kc)'));
+    return el('div', {class:'kpi ' + cls}, kids);
+  }
+  var pct1 = function(x){ return dec(x, 1) + '%'; };
+  var kp = el('div', {class:'kpis'}, [
+    kpi('k-ev', 'zap', 'Interruptions per feeder' + perDay, num(S.avgEv), function(x){ return dec(x, 2); }, int(S.ev) + ' interruptions in all', 'avgEv'),
+    days > 1 ? kpi('k-fd', 'plug', 'Feeders with outage, each day', num(S.pct), pct1, 'of ' + int(S.total) + ' feeders', 'pct')
+             : kpi('k-fd', 'plug', 'Feeders with outage', num(S.n), int, dec(S.pct, 1) + '% of ' + int(S.total) + ' feeders', 'n'),
+    kpi('k-ov', 'alert', 'Over 4 hours', num(S.over), int, 'feeders; longest ' + String(S.maxDur), 'over'),
+    kpi('k-mpi', 'clock', 'Minutes per interruption', num(S.mpi), function(x){ return dec(x, 1); }, 'average time to restore supply', 'mpi')
+  ]);
+  $c.appendChild(el('div', {class:'hero'}, [dialCard, kp]));
+
+  /* fact strip */
+  $c.appendChild(el('div', {class:'facts6'}, [
+    stat('grid', 'Total feeders', int(S.total), S.divisions ? int(S.divisions) + ' divisions' : null),
+    stat('zap', 'Interruptions', int(S.ev)),
+    stat('hour', 'Total outage, hr:min', hhmm(S.min)),
+    stat('top', 'Longest outage', String(S.maxDur), 'on one feeder'),
+    stat('repeat', 'Most interruptions', int(S.maxEv), 'on one feeder'),
+    stat('wifi', '10 plus interruptions', int(S.many), 'feeders')
+  ]));
+
+  /* the two DISCOMs */
+  var discRows = d.summary.filter(function(r){ return String(r.discom) !== STATE_NAME; });
+  if (scope === STATE_NAME && discRows.length > 1){
+    var mxEv = Math.max.apply(null, discRows.map(function(r){ return num(r.avgEv); }).concat([1e-9]));
+    var mxOv = Math.max.apply(null, discRows.map(function(r){ return num(r.over); }).concat([1e-9]));
+    $c.appendChild(el('div', {class:'duo'}, discRows.map(function(r){
+      var mb = function(label, value, pct){ return el('div', {class:'mbar'}, [el('span', {text:label}), el('b', {text:value}), bar(pct, 'var(--dc)')]); };
+      return el('button', {class:'card dcard', style:'--dc:' + colourOf(r.discom), 'aria-label':'Show ' + String(r.discom),
+        onclick:function(){ scope = String(r.discom); ui.circle = ''; ui.band = ''; render(); window.scrollTo({top:0, behavior:'smooth'}); }}, [
+        el('div', {class:'dtop'}, [
+          el('div', {class:'mini'}, [dial(num(r.avgMin), false), el('div', {class:'mv', text:hhmm(r.avgMin)})]),
+          el('div', {style:'min-width:0;flex:1'}, [
+            el('div', {class:'dname'}, [el('span', {class:'dot'}), String(r.discom), chip(band(num(r.avgMin)))]),
+            el('div', {class:'mbars'}, [
+              mb('Interruptions per feeder', dec(r.avgEv, 2), 100 * num(r.avgEv) / mxEv),
+              mb('Feeders with outage', dec(r.pct, 0) + '%', num(r.pct)),
+              mb('Over 4 hours', int(r.over), 100 * num(r.over) / mxOv)
+            ])
+          ])
+        ]),
+        el('div', {class:'dfoot', text:int(r.total) + ' feeders' + (r.divisions ? ' in ' + int(r.divisions) + ' divisions' : '') + '. Open to see ' + String(r.discom) + ' alone.'})
+      ]);
+    })));
+  }
+
+  /* at a glance */
+  var circ = d.circles.filter(function(r){ return inScope(r) && yes(r.received); }).sort(function(a, b){ return num(b.avgMin) - num(a.avgMin); });
+  var circCard = el('div', {class:'card full'}, [
+    el('h3', {text:'Average outage by circle'}),
+    (scope === STATE_NAME && discRows.length > 1) ? el('div', {class:'legend'}, discRows.map(function(r){
+      return el('span', null, [el('i', {class:'sw', style:'background:' + colourOf(r.discom)}), String(r.discom)]); })) : null,
+    hbars(circ.map(function(r){ return {name:String(r.circle), value:num(r.avgMin), colour:colourOf(r.discom), sub:String(r.discom)}; }), hhmm, 'average outage per feeder', true)
+  ]);
+  var ob = sumBands(d.obands, 'band').map(function(b, i){ b.colour = 'var(--r' + Math.min(7, i + 1) + ')'; return b; });
+  var ib = sumBands(d.ibands, 'band').map(function(b, i){ b.colour = 'var(--q' + Math.min(5, i + 1) + ')'; return b; });
+  var ibTotal = ib.reduce(function(a, i){ return a + i.value; }, 0);
+  var typeRows = typeGroups(d.types.filter(function(r){ return inScope(r) && yes(r.counted); }));
+  var tTotal = typeRows.reduce(function(a, t){ return a + t.n; }, 0) || 1;
+  var tMax = Math.max.apply(null, typeRows.map(function(t){ return t.n ? t.min / t.n : 0; }).concat([1e-9]));
+  var typeCard = el('div', {class:'card'}, [
+    el('h3', {text:'Feeder type'}), el('div', {class:'sub3', text:'Share of feeders, and average outage of those with outage'}),
+    el('div', {class:'stackbar'}, typeRows.map(function(t){
+      var s = el('i', {style:'--bc:' + typeColour(t.type), 'data-w':(100 * t.n / tTotal).toFixed(1) + '%'});
+      tipOn(s, t.type + ', ' + dec(100 * t.n / tTotal, 1) + '%', int(t.n) + ' feeders'); return s; })),
+    el('div', {class:'trows'}, typeRows.map(function(t){
+      var avg = t.n ? t.min / t.n : 0;
+      var row = el('div', {class:'trow'}, [el('i', {class:'sw', style:'background:' + typeColour(t.type)}),
+        el('span', {class:'n'}, [t.type, el('span', {class:'c', text:int(t.n)})]),
+        bar(100 * avg / tMax, typeColour(t.type)),
+        el('b', {text:hhmm(avg)})]);
+      tipOn(row, t.type + ', average outage of feeders with outage', hhmm(avg));
+      return row;
+    }))
+  ]);
+  $c.appendChild(el('div', {class:'sec'}, [el('div', {class:'sechead'}, [el('h2', {text:'At a glance'})]), el('div', {class:'grid3'}, [
+    el('div', {class:'card'}, [el('h3', {text:'Feeders by outage time'}), columns(ob, 'feeders')]),
+    el('div', {class:'card'}, [el('h3', {text:'Feeders by interruptions'}), donut(ib, int(ibTotal), 'feeders', 'feeders')]),
+    typeCard,
+    circCard
+  ])]));
+
+  var divSec = el('div', {class:'sec', id:'divSec'}); $c.appendChild(divSec); renderDivisions(divSec);
+  var rankSec = el('div', {class:'sec', id:'rankSec'}); $c.appendChild(rankSec); renderRanks(rankSec);
+  if (fromHistory){ var trSec = el('div', {class:'sec', id:'trendSec'}); $c.appendChild(trSec); renderTrend(trSec, wk, true); }
+  else if (dayRows.length > 1){ var trSec2 = el('div', {class:'sec', id:'trendSec'}); $c.appendChild(trSec2); renderTrend(trSec2, dayRows.map(function(r){ return {name:shortDate(r.date), r:r}; }), false); }
+  var overSec = el('div', {class:'sec', id:'overSec'}); $c.appendChild(overSec); renderOver(overSec);
+  if (d.agri && d.agriF){ var agSec = el('div', {class:'sec', id:'agSec'}); $c.appendChild(agSec); renderAgri(agSec); }
+
+  $c.appendChild(el('div', {class:'sec'}, [
+    el('div', {class:'sechead'}, [el('h2', {text:'Other feeders'})]),
+    el('div', {class:'stats3'}, [stat('tower', '33 kV', int(S.v33), 'feeders with outage, not counted'), stat('factory', 'Industrial, not counted', int(S.ind), 'feeders with outage'),
+                                 stat('meter', 'Meter fault, over 24 hrs', int(S.o24), 'feeders left out')])
+  ]));
+  grow();
+  firstDraw = false;
+}
+
+/* ---------- day by day ---------- */
+var TREND = [{v:'avgMin', t:'Average outage', f:hhmm}, {v:'avgEv', t:'Interruptions per feeder', f:function(x){ return dec(x, 2); }},
+             {v:'pct', t:'Feeders with outage', f:function(x){ return dec(x, 1) + '%'; }}, {v:'over', t:'Over 4 hours', f:int}];
+function trendChart(slots, m){
+  return el('div', {class:'linebox'}, [columns(slots.map(function(x){ return {name:x.name, value: x.r ? num(x.r[m.v]) : null}; }), '', m.f, m.t)]);
+}
+function renderTrend(sec, slots, isWeek){
+  sec.textContent = '';
+  var m = TREND.filter(function(x){ return x.v === ui.trend; })[0] || TREND[0];
+  var n = have(slots).length;
+  sec.appendChild(el('div', {class:'sechead'}, [el('h2', {text: isWeek ? 'Last 7 days' : 'Day by day'}),
+    isWeek && n < 7 ? el('span', {class:'count', text:n + ' of 7 days have figures'}) : null]));
+  sec.appendChild(el('div', {class:'ctrl'}, [pills(TREND, m.v, function(v){ ui.trend = v; renderTrend(sec, slots, isWeek); grow(); }, 'Measure')]));
+  sec.appendChild(el('div', {class:'card'}, [el('h3', {text:m.t + ', each day'}), trendChart(slots, m)]));
+}
+
+/* ---------- divisions ---------- */
+var SORTS = [{v:'avgMin', t:'Average outage'}, {v:'avgEv', t:'Interruptions per feeder'}, {v:'over', t:'Over 4 hours'}, {v:'pct', t:'Share with outage'}, {v:'name', t:'Name'}];
+function divKey(r){ return String(r.discom) + '|' + String(r.circle) + '|' + String(r.division); }
+function divisionOrder(rows, by, dir){
+  var live = rows.filter(function(r){ return yes(r.received); }), dead = rows.filter(function(r){ return !yes(r.received); });
+  live.sort(function(a, b){
+    if (by === 'name') return String(a.division).localeCompare(String(b.division));
+    var x = num(b[by]) - num(a[by]);
+    return (dir === 'asc' ? -x : x) || String(a.division).localeCompare(String(b.division));
+  });
+  return live.concat(dead);
+}
+function rankOf(r){
+  var ranked = divisionOrder(DATA.divisions.filter(inScope), 'avgMin', 'desc').filter(function(x){ return yes(x.received); });
+  return {rank:ranked.map(divKey).indexOf(divKey(r)) + 1, of:ranked.length};
+}
+function tileWeek(r){
+  var got = have(divWeek(r));
+  if (got.length < 2 || got[got.length - 1].day !== dayOf(uptoOf(r.discom))) return null;
+  var a = got[got.length - 1], b = got[got.length - 2], x = num(a.r.avgMin) - num(b.r.avgMin);
+  var word = Math.abs(x) < 1 ? 'Same as ' + b.name : (x > 0 ? '\u25B2 Up ' : '\u25BC Down ') + hhmm(Math.abs(x)) + ' from ' + b.name;
+  return el('div', {class:'tw'}, [el('div', {class:'twl'}, [el('span', {text:'Last 7 days'}), el('b', {class: x >= 1 ? 'up' : (x <= -1 ? 'down' : ''), text:word})]),
+    el('div', {class:'twsp'}, [spark(got.map(function(g){ return num(g.r.avgMin); }), 'var(--sc)').firstChild])]);
+}
+function renderDivisions(sec){
+  sec.textContent = '';
+  var d = DATA, rows = d.divisions.filter(inScope);
+  var circles = Array.from(new Set(rows.map(function(r){ return String(r.circle); }))).sort();
+  var ranked = divisionOrder(rows.slice(), 'avgMin', 'desc').filter(function(r){ return yes(r.received); });
+  var rk = {}; ranked.forEach(function(r, i){ rk[divKey(r)] = i + 1; });
+  var countBadge = el('span', {class:'count'});
+  sec.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Divisions'}), countBadge]));
+  var search = el('input', {type:'search', placeholder:'Search', value:ui.q, 'aria-label':'Search divisions', oninput:function(){ ui.q = search.value; drawTiles(); }});
+  sec.appendChild(el('div', {class:'ctrl'}, [
+    select('Order by', SORTS, ui.sort, function(v){ ui.sort = v; drawTiles(); }),
+    pills([{v:'desc', t:'Highest'}, {v:'asc', t:'Lowest'}], ui.dir, function(v){ ui.dir = v; renderDivisions(sec); grow(); }, 'Highest or lowest first'),
+    select('Circle', [{v:'', t:'All circles'}].concat(circles.map(function(c){ return {v:c, t:c}; })), ui.circle, function(v){ ui.circle = v; drawTiles(); }),
+    search
+  ]));
+  var all = el('button', {class:'chip', 'aria-pressed':String(!ui.band), onclick:function(){ ui.band = ''; renderDivisions(sec); grow(); }},
+                ['All', el('em', {text:String(ranked.length)})]);
+  sec.appendChild(el('div', {class:'keys' + (ui.band ? ' filtering' : ''), role:'group', 'aria-label':'Average outage per feeder'}, [all].concat(BANDS.map(function(b){
+    var n = rows.filter(function(r){ return yes(r.received) && band(num(r.avgMin)).key === b.key; }).length;
+    return el('button', {class:'chip band s-' + b.key, 'aria-pressed':String(ui.band === b.key),
+      onclick:function(){ ui.band = (ui.band === b.key) ? '' : b.key; renderDivisions(sec); grow(); }},
+      [el('i', {class:'dt', 'aria-hidden':'true'}), b.name, el('small', {text:b.label}), el('em', {text:String(n)})]);
+  })).concat([el('div', {class:'iconkey', 'aria-hidden':'true'}, [el('span', null, [icon('zap'), 'interruptions per feeder']), el('span', null, [icon('alert'), 'feeders over 4 hours'])])])));
+  var grid = el('div', {class:'tiles'});
+  sec.appendChild(grid);
+
+  function drawTiles(){
+    var q = ui.q.toLowerCase();
+    var list = rows.filter(function(r){
+      return (!ui.circle || String(r.circle) === ui.circle) && (!q || (String(r.division) + ' ' + String(r.circle)).toLowerCase().indexOf(q) >= 0) &&
+             (!ui.band || (yes(r.received) && band(num(r.avgMin)).key === ui.band));
+    });
+    list = divisionOrder(list, ui.sort, ui.dir);
+    countBadge.textContent = String(list.length);
+    grid.textContent = '';
+    if (!list.length){ grid.appendChild(el('div', {class:'empty', text:'Nothing matches'})); return; }
+    list.forEach(function(r){
+      var on = yes(r.received), b = band(num(r.avgMin));
+      var fz = el('span', {title:'Interruptions per feeder'}, [icon('zap'), el('b', {text:dec(r.avgEv, 1)})]);
+      var fo = el('span', {title:'Feeders over 4 hours'}, [icon('alert'), el('b', {text:int(r.over)})]);
+      grid.appendChild(el('button', {class:'tile ' + (on ? 's-' + b.key : 'off'),
+        'aria-label': String(r.division) + ', ' + (on ? 'average outage ' + hhmm(r.avgMin) + ', ' + b.name + ', ' + dec(r.avgEv, 1) + ' interruptions per feeder, ' + int(r.over) + ' feeders over 4 hours, rank ' + rk[divKey(r)] : 'no data'),
+        onclick:function(){ openDivision(r, list); }}, [
+        el('div', {class:'hd'}, [
+          el('div', {class:'who'}, [on ? el('span', {class:'rkb', text:String(rk[divKey(r)])}) : null,
+            el('div', {style:'min-width:0'}, [el('div', {class:'nm', text:String(r.division)}), el('div', {class:'ci', text:String(r.circle)})])]),
+          el('div', {class:'ring', title:'Share of feeders with outage'}, [ring(on ? num(r.pct) : 0, 'var(--sc)', 'rgba(255,255,255,.95)', 12), el('i', {text: on ? dec(r.pct, 0) + '%' : '\u2013'})])
+        ]),
+        el('div', {class:'big' + (on ? '' : ' none'), text: on ? hhmm(r.avgMin) : 'No data'}),
+        on ? el('div', {class:'tl'}, [chip(b), scope === STATE_NAME ? dChip(r.discom) : null]) : null,
+        on ? bar(100 * Math.min(1, num(r.avgMin) / DIAL_MAX), 'var(--sc)', 'thin') : null,
+        on ? el('div', {class:'facts'}, [fz, fo]) : null,
+        on ? tileWeek(r) : null
+      ]));
+    });
+    grow();
+  }
+  drawTiles();
+}
+
+/* ---------- one division ---------- */
+var $panel = document.getElementById('panel'), $veil = document.getElementById('veil'), lastFocus = null, panelSeq = [], panelAt = -1;
+function closePanel(){
+  $panel.classList.remove('on'); $veil.classList.remove('on'); $panel.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function stepPanel(by){
+  var i = panelAt + by;
+  if ($panel.classList.contains('on') && i >= 0 && i < panelSeq.length) openDivision(panelSeq[i], panelSeq, by < 0 ? 'prev' : 'next');
+}
+$veil.addEventListener('click', closePanel);
+document.addEventListener('keydown', function(e){
+  if (!$panel.classList.contains('on')) return;
+  if (e.key === 'Escape') closePanel();
+  var t = e.target && e.target.tagName;
+  if (t === 'INPUT' || t === 'SELECT' || t === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft'){ e.preventDefault(); stepPanel(-1); }
+  if (e.key === 'ArrowRight'){ e.preventDefault(); stepPanel(1); }
+});
+
+function feederRows(list){
+  var max = Math.max.apply(null, list.map(function(f){ return num(f.min); }).concat([1e-9]));
+  var box = el('div');
+  list.forEach(function(f){
+    box.appendChild(el('div', {class:'frow'}, [
+      el('div', {style:'min-width:0'}, [
+        el('div', {class:'t1', text:String(f.feeder)}),
+        el('div', {class:'t2', text:[f.ss, f.division, f.circle, f.type].filter(function(x){ return x !== '' && x !== undefined; }).join(', ')}),
+        bar(100 * num(f.min) / max, f.colour || 'var(--t1)')
+      ]),
+      el('span', {class:'badge', title:'Interruptions', 'aria-label':int(f.ev) + ' interruptions'}, [icon('zap'), int(f.ev)]),
+      el('div', {class:'o', title:'Outage, hr:min', text:hhmm(f.min)})
+    ]));
+  });
+  return box;
+}
+function sortTable(rows, cols, first){          // cols: {t, f, v(row), left}
+  var by = first, dir = -1;
+  var box = el('div', {class:'tbox'});
+  function draw(){
+    var list = rows.slice().sort(function(a, b){
+      var x = cols[by].v(a), y = cols[by].v(b);
+      return (typeof x === 'string') ? dir * String(x).localeCompare(String(y)) : dir * (x - y);
+    });
+    box.textContent = '';
+    var head = el('tr', null, cols.map(function(c, i){
+      return el('th', {scope:'col', 'aria-sort': i === by ? (dir < 0 ? 'descending' : 'ascending') : 'none'},
+        [el('button', {text:c.t + (i === by ? (dir < 0 ? ' \u2193' : ' \u2191') : ''), onclick:function(){ if (by === i) dir = -dir; else { by = i; dir = (typeof cols[i].v(rows[0]) === 'string') ? 1 : -1; } draw(); }})]);
+    }));
+    box.appendChild(el('table', {class:'st'}, [el('thead', null, [head]), el('tbody', null, list.map(function(r){
+      return el('tr', null, cols.map(function(c){ return el('td', {text:c.f(r)}); }));
+    }))]));
+  }
+  draw();
+  return box;
+}
+function openDivision(r, seq, how){
+  var d = DATA, same = function(x){ return String(x.discom) === String(r.discom) && String(x.circle) === String(r.circle) && String(x.division) === String(r.division); };
+  if (!$panel.classList.contains('on')) lastFocus = document.activeElement;
+  panelSeq = seq && seq.length ? seq : [r];
+  panelAt = panelSeq.map(divKey).indexOf(divKey(r));
+  if (panelAt < 0){ panelSeq = [r]; panelAt = 0; }
+  var on = yes(r.received), b = band(num(r.avgMin)), rk = rankOf(r);
+  var wasFirst = firstDraw; firstDraw = false;
+  var head = document.getElementById('pHead'); head.textContent = '';
+  var close = el('button', {class:'iconbtn x', 'aria-label':'Close', onclick:closePanel}, [icon('x')]);
+  var prevB = el('button', {class:'iconbtn', 'aria-label':'Previous division', onclick:function(){ stepPanel(-1); }}, [icon('left')]);
+  var nextB = el('button', {class:'iconbtn', 'aria-label':'Next division', onclick:function(){ stepPanel(1); }}, [icon('right')]);
+  if (panelAt <= 0) prevB.disabled = true;
+  if (panelAt >= panelSeq.length - 1) nextB.disabled = true;
+  head.appendChild(close);
+  head.appendChild(el('div', {class:'ttl'}, [
+    el('h2', {id:'pTitle', text:String(r.division)}),
+    el('p', {text:String(r.circle) + ' circle, ' + String(r.discom) + (panelSeq.length > 1 ? '. ' + (panelAt + 1) + ' of ' + panelSeq.length + ' in this list' : '')})
+  ]));
+  head.appendChild(el('div', {class:'nav'}, [prevB, nextB]));
+  head.appendChild(el('div', {class:'chiprow', style:'flex-basis:100%'}, [on ? chip(b) : el('span', {class:'chip s-nodata', text:'No data'}), dChip(r.discom),
+    on ? el('span', {class:'chip', text:'#' + rk.rank + ' of ' + rk.of}) : null,
+    key(r.src).indexOf('file') === 0 ? el('span', {class:'chip', text:'feeder total not known'}) : null]));
+  var body = document.getElementById('pBody'); body.textContent = '';
+  if (on){
+    body.appendChild(el('div', {class:'card pdial'}, [el('div', {class:'mini'}, [dial(num(r.avgMin), false)]),
+      el('div', null, [el('div', {class:'pv', text:hhmm(r.avgMin)}), el('div', {class:'pl', text:'Average outage per feeder' + (multiDay() ? ' per day' : '') + ', hr:min'})])]));
+    body.appendChild(el('div', {class:'card'}, [el('h3', {text:'Contacts'}), el('div', {class:'cboxes', style:'margin-top:10px'}, [
+      contactBox('EEE Supply', String(r.division), eeeOf(r.discom, r.circle, r.division)), contactBox('ESE Supply', String(r.circle), eseOf(r.discom, r.circle))])]));
+    body.appendChild(el('div', {class:'pgrid'}, [
+      [dec(r.avgEv, 2), 'Interruptions per feeder'],
+      [multiDay() ? dec(r.pct, 1) + '%' : int(r.n) + ' of ' + int(r.total), 'Feeders with outage'],
+      [int(r.over), 'Over 4 hours'], [int(r.ev), 'Interruptions'],
+      [String(r.maxDur), 'Longest outage'], [dec(r.mpi, 1), 'Minutes per interruption']
+    ].map(function(x){ return el('div', {class:'pk'}, [el('div', {class:'v', text:x[0]}), el('div', {class:'l', text:x[1]})]); })));
+
+    var dw = divWeek(r);
+    if (have(dw).length > 1){
+      var pm = 'avgMin', wCard = el('div', {class:'card'});
+      var drawWeek = function(){
+        wCard.textContent = '';
+        var m = TREND.filter(function(x){ return x.v === pm; })[0];
+        wCard.appendChild(el('div', {class:'cardhead'}, [el('h3', {text:'Last 7 days'}), pills(TREND, pm, function(v){ pm = v; drawWeek(); grow(); }, 'Measure')]));
+        wCard.appendChild(trendChart(dw, m));
+      };
+      drawWeek();
+      body.appendChild(wCard);
+    }
+    var tg = typeGroups(d.types.filter(function(x){ return same(x) && yes(x.counted); }));
+    var tn = tg.reduce(function(a, t){ return a + t.n; }, 0);
+    if (tn) body.appendChild(el('div', {class:'card'}, [el('h3', {text:'Feeder type'}),
+      donut(tg.map(function(t){ return {name:t.type, value:t.n, colour:typeColour(t.type)}; }), int(tn), 'feeders', 'feeders')]));
+
+    var subs = d.subs.filter(same).sort(function(a, b2){ return num(b2.min) - num(a.min); });
+    var subCard = el('div', {class:'card'}, [el('div', {class:'cardhead'}, [el('h3', {text:'Substations'}), el('span', {class:'count', text:String(subs.length)})])]);
+    if (!subs.length) subCard.appendChild(el('div', {class:'empty', text:'No outage'}));
+    else {
+      subCard.appendChild(hbars(subs.slice(0, 8).map(function(s){ return {name:String(s.name), value:num(s.min), colour:colourOf(r.discom), sub:int(s.n) + ' feeders, ' + int(s.ev) + ' interruptions'}; }), hhmm, 'total outage'));
+      subCard.appendChild(sortTable(subs, [
+        {t:'Substation', f:function(s){ return String(s.name); }, v:function(s){ return String(s.name); }},
+        {t:'Feeders', f:function(s){ return int(s.n); }, v:function(s){ return num(s.n); }},
+        {t:'Interruptions', f:function(s){ return int(s.ev); }, v:function(s){ return num(s.ev); }},
+        {t:'Outage', f:function(s){ return hhmm(s.min); }, v:function(s){ return num(s.min); }},
+        {t:'Average', f:function(s){ return hhmm(s.avgMin); }, v:function(s){ return num(s.avgMin); }}
+      ], 3));
+    }
+    body.appendChild(subCard);
+
+    var mode = 'Outage';
+    var fCard = el('div', {class:'card'});
+    var drawFeeders = function(){
+      fCard.textContent = '';
+      fCard.appendChild(el('div', {class:'cardhead'}, [el('h3', {text:'Worst feeders'}),
+        pills([{v:'Outage', t:'Outage'}, {v:'Interruptions', t:'Interruptions'}], mode, function(v){ mode = v; drawFeeders(); grow(); }, 'Order the feeders')]));
+      var list = d.ranks.filter(function(x){ return key(x.listFor) === 'division' && same(x) && String(x.measure) === mode && String(x.side) === 'Top'; })
+                        .sort(function(a, b2){ return num(a.rank) - num(b2.rank); });
+      if (list.length) fCard.appendChild(feederRows(list.map(function(f){ return {feeder:f.feeder, ss:f.ss, type:f.type, ev:f.ev, min:f.min, colour:colourOf(r.discom)}; })));
+      else fCard.appendChild(el('div', {class:'empty', text:'No outage'}));
+    };
+    drawFeeders();
+    body.appendChild(fCard);
+
+    var extra = [];
+    var ag = d.agri ? d.agri.filter(same)[0] : null, v = d.v33.filter(same)[0];
+    if (ag) extra.push(stat('leaf', 'Agriculture feeders', int(ag.n), hhmm(num(ag.n) ? num(ag.min) / num(ag.n) : 0) + ' average'));
+    if (v) extra.push(stat('tower', '33 kV feeders', int(v.n), int(v.ev) + ' interruptions'));
+    if (extra.length) body.appendChild(el('div', {class:'stats2'}, extra));
+  } else {
+    body.appendChild(el('div', {class:'card'}, [el('div', {class:'empty', text:'No figures came for this division.'})]));
+  }
+  $panel.classList.add('on'); $veil.classList.add('on'); $panel.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  body.scrollTop = 0;
+  if (how === 'prev' && !prevB.disabled) prevB.focus(); else if (how === 'next' && !nextB.disabled) nextB.focus(); else close.focus();
+  grow();
+  firstDraw = wasFirst;
+}
+
+/* ---------- top and bottom ---------- */
+var MEASURES = {
+  Divisions: [
+    {v:'avgMin', t:'Average outage', f:hhmm},
+    {v:'avgEv', t:'Interruptions per feeder', f:function(x){ return dec(x, 2); }},
+    {v:'over', t:'Over 4 hours', f:int},
+    {v:'pct', t:'Share with outage', f:function(x){ return dec(x, 1) + '%'; }},
+    {v:'ev', t:'Total interruptions', f:int},
+    {v:'mpi', t:'Minutes per interruption', f:function(x){ return dec(x, 1); }}
+  ],
+  Substations: [
+    {v:'avgMin', t:'Average outage', f:hhmm},
+    {v:'avgEv', t:'Interruptions per feeder', f:function(x){ return dec(x, 2); }},
+    {v:'min', t:'Total outage', f:hhmm},
+    {v:'ev', t:'Total interruptions', f:int},
+    {v:'over', t:'Over 4 hours', f:int}
+  ],
+  Feeders: [
+    {v:'Outage', t:'Outage', f:hhmm, field:'min'},
+    {v:'Interruptions', t:'Interruptions', f:int, field:'ev'},
+    {v:'Min per Interruption', t:'Minutes per interruption', f:function(x){ return dec(x, 1); }, field:'mpi'}
+  ]
+};
+function renderRanks(sec){
+  sec.textContent = '';
+  var d = DATA, ms = MEASURES[ui.level];
+  var m = ms.filter(function(x){ return x.v === ui.measure; })[0] || ms[0];
+  ui.measure = m.v;
+  sec.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Top and bottom'}),
+    el('span', {class:'chip ' + (ui.side === 'Top' ? 's-serious' : 's-good')}, [el('i', {class:'dt', 'aria-hidden':'true'}), ui.side === 'Top' ? 'Highest figures, worst first' : 'Lowest figures, best first'])]));
+  sec.appendChild(el('div', {class:'ctrl'}, [
+    pills(['Top', 'Bottom'], ui.side, function(v){ ui.side = v; renderRanks(sec); grow(); }, 'Top or bottom'),
+    pills([5, 10, 20], ui.n, function(v){ ui.n = v; renderRanks(sec); grow(); }, 'How many'),
+    pills(['Divisions', 'Substations', 'Feeders'], ui.level, function(v){ ui.level = v; ui.measure = ''; renderRanks(sec); grow(); }, 'Level'),
+    select('Measure', ms, m.v, function(v){ ui.measure = v; renderRanks(sec); grow(); })
+  ]));
+  var card = el('div', {class:'card'});
+  var items = [], sign = ui.side === 'Top' ? -1 : 1;
+  if (ui.level === 'Divisions'){
+    items = d.divisions.filter(function(r){ return inScope(r) && yes(r.received) && yes(r.big); })
+      .sort(function(a, b){ return sign * (num(a[m.v]) - num(b[m.v])) || String(a.division).localeCompare(String(b.division)); }).slice(0, ui.n)
+      .map(function(r){ return {t1:String(r.division), t2:String(r.circle), value:num(r[m.v]), discom:r.discom, open:r}; });
+  } else if (ui.level === 'Substations'){
+    items = d.subs.filter(function(r){ return inScope(r) && yes(r.big); })
+      .sort(function(a, b){ return sign * (num(a[m.v]) - num(b[m.v])) || String(a.name).localeCompare(String(b.name)); }).slice(0, ui.n)
+      .map(function(r){ return {t1:String(r.name), t2:String(r.division) + ', ' + String(r.circle), value:num(r[m.v]), discom:r.discom}; });
+  } else {
+    items = d.ranks.filter(function(r){ return String(r.listFor) === scope && String(r.measure) === m.v && String(r.side) === ui.side && num(r.rank) <= ui.n; })
+      .sort(function(a, b){ return num(a.rank) - num(b.rank); })
+      .map(function(r){ return {t1:String(r.feeder), t2:String(r.ss) + ', ' + String(r.division), value:num(r[m.field]), discom:r.discom}; });
+  }
+  var max = Math.max.apply(null, items.map(function(i){ return i.value; }).concat([1e-9]));
+  var seq = items.filter(function(i){ return i.open; }).map(function(i){ return i.open; });
+  var list = el('div', {class:'rlist ' + (ui.side === 'Top' ? 'worst' : 'best')});
+  items.forEach(function(it, i){
+    var kids = [el('div', {class:'no', text:String(i + 1)}),
+      el('div', {style:'min-width:0'}, [el('div', {class:'t1', text:it.t1, title:it.t1}), el('div', {class:'t2', text:it.t2})]),
+      bar(100 * it.value / max, colourOf(it.discom)),
+      el('div', {class:'vl', text:m.f(it.value)})];
+    var row;
+    if (it.open){
+      row = el('button', {class:'rrow rowbtn', 'aria-label':it.t1 + ', ' + m.t + ' ' + m.f(it.value), onclick:function(){ openDivision(it.open, seq); }}, kids);
+    } else {
+      row = el('div', {class:'rrow'}, kids);
+      tipOn(row, it.t1 + ', ' + m.t, m.f(it.value));
+    }
+    list.appendChild(row);
+  });
+  if (!items.length) list.appendChild(el('div', {class:'empty', text:'Nothing to show'}));
+  card.appendChild(list);
+  sec.appendChild(card);
+}
+
+/* ---------- feeder lists ---------- */
+function feederList(card, all, first, extra, keys, colourFor){
+  var search = el('input', {type:'search', placeholder:'Search', value:ui[keys.q], 'aria-label':'Search feeders', oninput:function(){ ui[keys.q] = search.value; ui[keys.n] = first; draw(); }});
+  card.appendChild(el('div', {class:'ctrl'}, (extra || []).concat([
+    select('Order by', [{v:'min', t:'Longest outage'}, {v:'ev', t:'Most interruptions'}, {v:'division', t:'Division'}], ui[keys.sort], function(v){ ui[keys.sort] = v; draw(); }),
+    search])));
+  var box = el('div'); card.appendChild(box);
+  function draw(){
+    var q = ui[keys.q].toLowerCase(), by = ui[keys.sort];
+    var list = all.filter(function(f){ return !q || [f.feeder, f.ss, f.division, f.circle].join(' ').toLowerCase().indexOf(q) >= 0; });
+    list.sort(function(a, b){
+      if (by === 'division') return String(a.division).localeCompare(String(b.division)) || num(b.min) - num(a.min);
+      return num(b[by]) - num(a[by]) || num(b.min) - num(a.min);
+    });
+    box.textContent = '';
+    if (!list.length){ box.appendChild(el('div', {class:'empty', text: all.length ? 'Nothing matches' : 'None'})); return; }
+    box.appendChild(feederRows(list.slice(0, ui[keys.n]).map(function(f){
+      return {feeder:f.feeder, ss:f.ss, division:f.division, circle:f.circle, type:f.typeNote !== undefined ? f.typeNote : f.type, ev:f.ev, min:f.min, colour:colourFor(f)};
+    })));
+    if (list.length > ui[keys.n]) box.appendChild(el('div', {class:'more'}, [el('button', {class:'btn', text:'Show all ' + list.length, onclick:function(){ ui[keys.n] = 1e9; draw(); }})]));
+    grow();
+  }
+  draw();
+}
+function renderOver(sec){
+  sec.textContent = '';
+  var all = DATA.over.filter(inScope);
+  sec.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'More than 4 hours'}), el('span', {class:'count', text:String(all.length)})]));
+  var card = el('div', {class:'card'});
+  feederList(card, all, 12, null, {q:'overQ', n:'over', sort:'overSort'}, function(f){ return colourOf(f.discom); });
+  sec.appendChild(card);
+}
+
+/* ---------- agriculture feeders ---------- */
+function renderAgri(sec){
+  sec.textContent = '';
+  var d = DATA, divs = d.agri.filter(inScope), all = d.agriF.filter(inScope);
+  var n = 0, ev = 0, min = 0, over = 0;
+  divs.forEach(function(r){ n += num(r.n); ev += num(r.ev); min += num(r.min); over += num(r.over); });
+  var wrap = el('div', {class:'agwrap'});
+  wrap.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Agriculture feeders'}), el('span', {class:'count', text:'not in the averages'})]));
+  wrap.appendChild(el('div', {class:'stats4'}, [stat('leaf', 'Feeders with outage', int(n)), stat('zap', 'Interruptions', int(ev)),
+    stat('clock', 'Average outage', hhmm(n ? min / n : 0)), stat('alert', 'Over 4 hours', int(over))]));
+  sec.appendChild(wrap);
+  if (!n) return;
+  var byC = {};
+  divs.forEach(function(r){ var k = String(r.discom) + '|' + String(r.circle); var c = byC[k] || (byC[k] = {name:String(r.circle), n:0, min:0}); c.n += num(r.n); c.min += num(r.min); });
+  var circ = Object.keys(byC).map(function(k){ return byC[k]; }).sort(function(a, b){ return (b.min / b.n) - (a.min / a.n); });
+  var left = el('div', {class:'card'}, [el('h3', {text:'Average outage by circle'}),
+    hbars(circ.map(function(c){ return {name:c.name, value:c.min / c.n, colour:'var(--t1)', sub:int(c.n) + ' feeders'}; }), hhmm, 'average outage of feeders with outage')]);
+  var movedN = all.filter(function(f){ return yes(f.moved); }).length;
+  var shown = all.filter(function(f){ return ui.agWhich === 'all' || yes(f.moved); }).map(function(f){
+    var o = {}; for (var k in f) o[k] = f[k]; o.typeNote = yes(f.moved) ? 'listed as ' + String(f.typeInFile) : ''; return o; });
+  var right = el('div', {class:'card'});
+  feederList(right, shown, 10, movedN ? [pills([{v:'all', t:'All ' + all.length}, {v:'moved', t:'Type corrected ' + movedN}], ui.agWhich,
+    function(v){ ui.agWhich = v; ui.ag = 10; renderAgri(sec); grow(); }, 'Which feeders')] : null, {q:'agQ', n:'ag', sort:'agSort'}, function(){ return 'var(--t1)'; });
+  wrap.appendChild(el('div', {class:'split'}, [left, right]));
+}
+
+/* ---------- PDF reports (made in the browser; nothing is stored anywhere) ---------- */
+var PDF_LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'];
+var PW = 595.28, PH = 841.89, PM = 36;
+var INK = '#1d2433', MUTED = '#667085', LINE = '#e7eaf0';
+var STATUS_COL = {Good:['#1a8a4c', '#eaf8f0'], Watch:['#9a6400', '#fff7e4'], High:['#b8352b', '#fff0ee'], 'Very high':['#86211b', '#fbe7e5'], 'No data':['#6b7385', '#f4f5f8']};
+var DISCOM_HEX = {SBPDCL:'#2a78d6', NBPDCL:'#eb6834', BIHAR:'#475467'};
+var $toast = document.getElementById('toast'), toastTimer = null, libsReady = null;
+function toast(text, url, name){
+  clearTimeout(toastTimer); $toast.textContent = '';
+  $toast.appendChild(el('span', {text:text}));
+  if (url) $toast.appendChild(el('a', {href:url, target:'_blank', rel:'noopener', download:name || null, text:'Open the PDF'}));
+  $toast.classList.add('on');
+  toastTimer = setTimeout(function(){ $toast.classList.remove('on'); }, url ? 12000 : 5000);
+}
+function loadScript(src){
+  return new Promise(function(ok, bad){ var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
+}
+function pdfLibs(){
+  if (window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable) return Promise.resolve();
+  if (!libsReady){
+    libsReady = loadScript(PDF_LIBS[0]).then(function(){ return loadScript(PDF_LIBS[1]); });
+    libsReady.catch(function(){ libsReady = null; });
+  }
+  return libsReady;
+}
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function madeOn(){
+  var d = new Date(), mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate() + ' ' + mo[d.getMonth()] + ' ' + d.getFullYear() + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+function fill(doc, h){ var c = hex(h); doc.setFillColor(c[0], c[1], c[2]); }
+function ink(doc, h){ var c = hex(h); doc.setTextColor(c[0], c[1], c[2]); }
+function stroke(doc, h){ var c = hex(h); doc.setDrawColor(c[0], c[1], c[2]); }
+function newPdf(title, sub, wide){
+  var doc = new window.jspdf.jsPDF({unit:'pt', format:'a4', orientation: wide ? 'landscape' : 'portrait', compress:true});
+  PW = doc.internal.pageSize.getWidth(); PH = doc.internal.pageSize.getHeight();
+  var P = {doc:doc, y:0, t1:cssVar('--t1') || '#f0752f', t2:cssVar('--t2') || '#f7a531', title:title, sub:sub};
+  doc.setProperties({title:title + ' - ' + sub});
+  for (var i = 0; i < 48; i++){ fill(doc, mix(P.t1, P.t2, i / 47)); doc.rect(i * PW / 48, 0, PW / 48 + 0.8, 72, 'F'); }
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text(title, PM, 33);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.text(sub, PM, 52);
+  doc.setFontSize(8.5); doc.text('Bihar 11 kV Feeder Outage', PW - PM, 33, {align:'right'}); doc.text('Made on ' + madeOn(), PW - PM, 52, {align:'right'});
+  P.y = 96;
+  return P;
+}
+function need(P, h){ if (P.y + h > PH - 48){ P.doc.addPage(); P.y = 48; } }
+function heading(P, text, colour){ drawHeading(P); P.pending = {text:text, colour:colour}; }    // drawn together with what follows it
+function drawHeading(P){
+  if (!P.pending) return;
+  var h = P.pending; P.pending = null;
+  need(P, 60);
+  var d = P.doc; fill(d, h.colour || P.t1); d.roundedRect(PM, P.y - 11, 4, 15, 2, 2, 'F');
+  ink(d, INK); d.setFont('helvetica', 'bold'); d.setFontSize(12.5); d.text(h.text, PM + 11, P.y + 1);
+  P.y += 14;
+}
+function para(P, text){
+  drawHeading(P); need(P, 24); var d = P.doc; ink(d, MUTED); d.setFont('helvetica', 'normal'); d.setFontSize(9);
+  var lines = d.splitTextToSize(text, PW - 2 * PM); d.text(lines, PM, P.y + 4); P.y += 12 * lines.length + 8;
+}
+function cell(text, v, extra){ var c = {content:String(text), v:v}; if (extra) for (var k in extra) c[k] = extra[k]; return c; }
+function table(P, head, body, opt){
+  opt = opt || {};
+  var max = 0;
+  if (opt.bar !== undefined) body.forEach(function(r){ var c = r[opt.bar]; if (c && typeof c.v === 'number' && c.v > max) max = c.v; });
+  function settings(d, startY){
+    return {
+      startY:startY, head:[head], body:body, theme:'grid', margin:{left:PM, right:PM, top:48, bottom:48}, rowPageBreak:'avoid',
+      styles:{font:'helvetica', fontSize:opt.size || 8.6, cellPadding:{top:opt.tight ? 3 : 4, right:5, bottom:opt.bar !== undefined ? (opt.tight ? 6 : 7) : (opt.tight ? 3 : 4), left:5}, textColor:hex(INK), lineColor:hex(LINE), lineWidth:0.5, valign:'middle', overflow:'linebreak'},
+      headStyles:{fillColor:hex(mix(P.t1, INK, 0.12)), textColor:255, fontStyle:'bold', halign:'center', valign:'middle'},
+      alternateRowStyles:{fillColor:[248, 249, 252]},
+      columnStyles:opt.cols || {},
+      didParseCell:function(x){
+        if (x.section !== 'body') return;
+        var raw = x.cell.raw || {};
+        if (raw.status) x.cell.styles.minCellWidth = 50;
+        if (raw.status && STATUS_COL[raw.status]){ x.cell.styles.fillColor = hex(STATUS_COL[raw.status][1]); x.cell.styles.textColor = hex(STATUS_COL[raw.status][0]); x.cell.styles.fontStyle = 'bold'; }
+        if (raw.bold || raw.contact) x.cell.styles.fontStyle = 'bold';
+        if (raw.dim) x.cell.styles.textColor = hex(MUTED);
+      },
+      willDrawCell:function(x){
+        if (x.section === 'body' && x.cell.raw && x.cell.raw.contact) x.cell.text = [];     // drawn below: name on the left, number in the middle
+      },
+      didDrawCell:function(x){
+        if (x.section !== 'body') return;
+        var raw = x.cell.raw || {}, c = x.cell;
+        if (raw.contact){
+          var fs = c.styles.fontSize, lh = fs * 1.15, k = raw.contact;
+          d.setFont('helvetica', 'bold'); d.setFontSize(fs);
+          var lines = k.name ? d.splitTextToSize(k.name, c.width - 10) : [];
+          var y0 = c.y + (c.height - lh * (lines.length + 1)) / 2 + fs * 0.85;
+          ink(d, INK); lines.forEach(function(t, i){ d.text(t, c.x + 5, y0 + i * lh); });
+          var ny = y0 + lines.length * lh, nw = d.getTextWidth(k.num);
+          ink(d, '#175cd3'); d.text(k.num, c.x + c.width / 2, ny, {align:'center'});
+          stroke(d, '#175cd3'); d.setLineWidth(0.5); d.line(c.x + c.width / 2 - nw / 2, ny + 1.5, c.x + c.width / 2 + nw / 2, ny + 1.5);
+          if (k.tel) d.link(c.x, c.y, c.width, c.height, {url:'tel:' + k.tel});
+          return;
+        }
+        if (opt.bar === undefined || x.column.index !== opt.bar) return;
+        if (typeof raw.v !== 'number' || !max) return;
+        var w = (c.width - 10) * Math.max(0, raw.v) / max;
+        fill(d, '#eef0f5'); d.roundedRect(c.x + 5, c.y + c.height - 6, c.width - 10, 2.6, 1.3, 1.3, 'F');
+        fill(d, raw.colour || P.t1); if (w > 0.5) d.roundedRect(c.x + 5, c.y + c.height - 6, w, 2.6, 1.3, 1.3, 'F');
+      }
+    };
+  }
+  // measure the table on a spare page first, so that a table never crosses a page if it can fit on one
+  var J = window.jspdf.jsPDF, spare = new J({unit:'pt', format:'a4', orientation: PW > PH ? 'landscape' : 'portrait'});
+  var d = spare; spare.autoTable(settings(spare, 48));
+  var tall = spare.getNumberOfPages() > 1 ? Infinity : spare.lastAutoTable.finalY - 48;
+  var hh = P.pending ? 16 : 0;
+  if (P.y + hh + tall > PH - 48 && P.y > 110){ P.doc.addPage(); P.y = 56; }
+  drawHeading(P);
+  d = P.doc; d.autoTable(settings(d, P.y));
+  P.y = d.lastAutoTable.finalY + 18;
+}
+function finish(P, name){
+  var d = P.doc, n = d.getNumberOfPages();
+  for (var i = 1; i <= n; i++){
+    d.setPage(i); stroke(d, LINE); d.setLineWidth(0.5); d.line(PM, PH - 32, PW - PM, PH - 32);
+    ink(d, MUTED); d.setFont('helvetica', 'normal'); d.setFontSize(8);
+    d.text(P.title + '  |  ' + P.sub, PM, PH - 20); d.text('Page ' + i + ' of ' + n, PW - PM, PH - 20, {align:'right'});
+  }
+  var url = null;
+  try { url = URL.createObjectURL(d.output('blob')); } catch (e) {}
+  try { d.save(name); } catch (e) {}
+  toast('PDF ready: ' + name + '. If it did not download, press', url, name);
+}
+function sumOf(discom){ return DATA.summary.filter(function(r){ return String(r.discom) === discom; })[0]; }
+function discomsHere(){ return ['SBPDCL', 'NBPDCL'].filter(function(x){ return !!sumOf(x); }); }
+function asOnText(){
+  var ds = discomsHere(), dates = ds.map(function(x){ return periodText(sumOf(x)); });
+  if (dates.every(function(t){ return t === dates[0]; })) return 'As on ' + dates[0];
+  return ds.map(function(x, i){ return x + ' as on ' + dates[i]; }).join(', ');
+}
+function periodText(S){ return num(S.days) > 1 ? niceDate(S.upto) + ' (' + num(S.days) + ' days from ' + shortDate(S.from) + ')' : niceDate(S.upto); }
+function fileDay(){ var s = sumOf(discomsHere()[0]); return String(s ? s.upto : '').replace(/[^0-9A-Za-z-]/g, ''); }
+function st(min, on){ var name = on === false ? 'No data' : band(num(min)).name; return cell(name, null, {status:name}); }
+var pct1 = function(x){ return dec(x, 1) + '%'; };
+
+/* 1. Daily outage: today, the last 7 days, SBPDCL and NBPDCL */
+function pdfDaily(){
+  var P = newPdf('Daily outage report', asOnText()), d = P.doc;
+  var rows = DATA.summary.slice(), names = rows.map(function(r){ return String(r.discom); });
+  // figure cards
+  var gap = 12, cw = (PW - 2 * PM - gap * (rows.length - 1)) / rows.length, ch = 104;
+  rows.forEach(function(S, i){
+    var x = PM + i * (cw + gap), y = P.y - 10, nm = String(S.discom), col = DISCOM_HEX[nm] || P.t1, b = band(num(S.avgMin));
+    fill(d, mix('#ffffff', col, 0.08)); stroke(d, mix('#ffffff', col, 0.35)); d.setLineWidth(0.8); d.roundedRect(x, y, cw, ch, 9, 9, 'FD');
+    fill(d, col); d.roundedRect(x, y, 5, ch, 2.5, 2.5, 'F');
+    ink(d, INK); d.setFont('helvetica', 'bold'); d.setFontSize(11); d.text(nm === STATE_NAME ? 'Bihar' : nm, x + 14, y + 18);
+    d.setFontSize(23); d.text(hhmm(S.avgMin), x + 14, y + 45);
+    d.setFont('helvetica', 'normal'); d.setFontSize(8); ink(d, MUTED); d.text('hr:min, average outage per feeder' + (num(S.days) > 1 ? ' per day' : ''), x + 14, y + 57);
+    var sc = STATUS_COL[b.name]; fill(d, sc[1]); var tw = d.getTextWidth(b.name + '  ' + b.label) + 14;
+    d.roundedRect(x + cw - tw - 10, y + 9, tw, 14, 7, 7, 'F'); ink(d, sc[0]); d.setFont('helvetica', 'bold'); d.setFontSize(7.5); d.text(b.name + '  ' + b.label, x + cw - tw / 2 - 10, y + 18.6, {align:'center'});
+    ink(d, INK); d.setFont('helvetica', 'normal'); d.setFontSize(8.5);
+    d.text(dec(S.avgEv, 2) + ' interruptions per feeder', x + 14, y + 72);
+    d.text(int(S.n) + ' of ' + int(S.total) + ' feeders had an outage', x + 14, y + 84);
+    d.text(int(S.over) + ' feeders over 4 hours; longest ' + String(S.maxDur), x + 14, y + 96);
+  });
+  P.y += ch + 12;
+  heading(P, 'At a glance');
+  table(P, ['', 'Total feeders', 'Feeders with outage', 'Share', 'Interruptions', 'Per feeder', 'Average outage', 'Min per interruption', 'Over 4 hrs', 'Longest', 'Status'],
+    rows.map(function(S){ var nm = String(S.discom);
+      return [cell(nm === STATE_NAME ? 'Bihar' : nm, null, {bold:true}), int(S.total), int(S.n), pct1(S.pct), int(S.ev), dec(S.avgEv, 2), hhmm(S.avgMin), dec(S.mpi, 1), int(S.over), String(S.maxDur), st(S.avgMin)]; }),
+    {cols:{0:{halign:'left'}, 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right'}, 8:{halign:'right'}, 9:{halign:'right'}, 10:{halign:'center'}}, size:8.2});
+
+  // last 7 days
+  heading(P, 'Last 7 days');
+  var series = names.map(function(nm){
+    var w = week(DATA.hDays.filter(function(r){ return String(r.discom) === nm; }), sumOf(nm).upto);
+    return {name:nm, slots:w, n:have(w).length};
+  });
+  var useful = series.filter(function(s){ return s.n > 1; });
+  if (!useful.length){
+    para(P, 'Only one day of figures is kept so far. The 7-day trend fills in as the daily reports are sent.');
+  } else {
+    need(P, 214); drawHeading(P);
+    var top = P.y + 6, hgt = 130, left = PM + 34, right = PW - PM, days = useful[0].slots;
+    var mx = 0; useful.forEach(function(s){ s.slots.forEach(function(x){ if (x.r && num(x.r.avgMin) > mx) mx = num(x.r.avgMin); }); });
+    mx = Math.max(60, Math.ceil(mx / 30) * 30);
+    d.setFontSize(7.5); d.setFont('helvetica', 'normal');
+    [0, 0.5, 1].forEach(function(f){
+      var yy = top + hgt * (1 - f); stroke(d, LINE); d.setLineWidth(0.5); d.line(left, yy, right, yy); ink(d, MUTED); d.text(hhmm(mx * f), left - 6, yy + 2.5, {align:'right'});
+    });
+    var gw = (right - left) / days.length, bw = Math.min(16, (gw - 10) / useful.length);
+    days.forEach(function(slot, k){
+      var gx = left + k * gw + (gw - bw * useful.length) / 2;
+      useful.forEach(function(s, j){
+        var x = s.slots[k], colr = DISCOM_HEX[s.name] || P.t1;
+        if (!x.r){ ink(d, '#98a2b3'); d.text('-', gx + j * bw + bw / 2, top + hgt - 3, {align:'center'}); return; }
+        var v = num(x.r.avgMin), bh = Math.max(1, hgt * v / mx);
+        fill(d, colr); d.roundedRect(gx + j * bw + 1, top + hgt - bh, bw - 2, bh, 2, 2, 'F');
+        ink(d, INK); d.setFontSize(6.2); d.text(hhmm(v), gx + j * bw + bw / 2, top + hgt - bh - 3, {align:'center'});
+      });
+      ink(d, MUTED); d.setFontSize(7.5); d.text(slot.name, left + k * gw + gw / 2, top + hgt + 12, {align:'center'});
+    });
+    var lx = left; d.setFontSize(8); ink(d, MUTED); d.text('Average outage per feeder, hr:min:', lx, top + hgt + 29); lx += d.getTextWidth('Average outage per feeder, hr:min:') + 12;
+    useful.forEach(function(s){ fill(d, DISCOM_HEX[s.name] || P.t1); d.roundedRect(lx, top + hgt + 22, 8, 8, 2, 2, 'F'); ink(d, INK);
+      var t = s.name === STATE_NAME ? 'Bihar' : s.name; d.text(t, lx + 12, top + hgt + 29); lx += d.getTextWidth(t) + 30; });
+    P.y = top + hgt + 46;
+    var head = ['Day'], body = [];
+    useful.forEach(function(s){ head.push((s.name === STATE_NAME ? 'Bihar' : s.name) + ' average outage'); });
+    useful.forEach(function(s){ head.push((s.name === STATE_NAME ? 'Bihar' : s.name) + ' interruptions per feeder'); });
+    days.forEach(function(slot, k){
+      var r = [cell(slot.name, null, {bold:true})];
+      useful.forEach(function(s){ var x = s.slots[k].r; r.push(x ? hhmm(x.avgMin) : cell('No report', null, {dim:true})); });
+      useful.forEach(function(s){ var x = s.slots[k].r; r.push(x ? dec(x.avgEv, 2) : cell('No report', null, {dim:true})); });
+      body.push(r);
+    });
+    var cols = {0:{halign:'left', cellWidth:48}}; for (var c = 1; c < head.length; c++) cols[c] = {halign:'right'};
+    table(P, head, body, {cols:cols, size:8.2});
+  }
+
+  // each DISCOM
+  discomsHere().forEach(function(nm){
+    var col = DISCOM_HEX[nm];
+    heading(P, nm + ': outage by circle (highest average outage first)', col);
+    var circ = DATA.circles.filter(function(r){ return String(r.discom) === nm; }).sort(function(a, b){ return num(b.avgMin) - num(a.avgMin); });
+    table(P, ['Circle', 'Total feeders', 'Feeders with outage', 'Interruptions', 'Per feeder', 'Average outage', 'Over 4 hrs', 'Status'],
+      circ.map(function(r){ var on = yes(r.received);
+        return [cell(String(r.circle), null, {bold:true}), int(r.total), int(r.n), int(r.ev), dec(r.avgEv, 2), cell(hhmm(r.avgMin), num(r.avgMin), {colour:col}), int(r.over), st(r.avgMin, on)]; }),
+      {bar:5, cols:{0:{halign:'left'}, 1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'center'}}});
+    var divs = divisionOrder(DATA.divisions.filter(function(r){ return String(r.discom) === nm; }), 'avgMin', 'desc').filter(function(r){ return yes(r.received); }).slice(0, 10);
+    heading(P, nm + ': 10 divisions with the highest average outage', col);
+    var anyWeek = divs.some(function(r){ return have(divWeek(r)).length > 1; });
+    var head = ['Rank', 'Division', 'Circle', 'Total feeders', 'Per feeder', 'Average outage', 'Over 4 hrs', 'Status'];
+    if (anyWeek) head.push('Change from the day before');
+    table(P, head, divs.map(function(r, i){
+      var row = [String(i + 1), cell(String(r.division), null, {bold:true}), String(r.circle), int(r.total), dec(r.avgEv, 2), hhmm(r.avgMin), int(r.over), st(r.avgMin)];
+      if (anyWeek){
+        var g = have(divWeek(r)), t = '';
+        if (g.length > 1 && g[g.length - 1].day === dayOf(uptoOf(r.discom))){
+          var x = num(g[g.length - 1].r.avgMin) - num(g[g.length - 2].r.avgMin);
+          t = Math.abs(x) < 1 ? 'Same as ' + g[g.length - 2].name : (x > 0 ? 'Up ' : 'Down ') + hhmm(Math.abs(x)) + ' from ' + g[g.length - 2].name;
+        }
+        row.push(t || cell('-', null, {dim:true}));
+      }
+      return row;
+    }), {cols:{0:{halign:'center', cellWidth:30}, 1:{halign:'left'}, 2:{halign:'left'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'center'}, 8:{halign:'left'}}});
+  });
+  finish(P, 'Daily_Outage_Report_' + fileDay() + '.pdf');
+}
+
+/* 2. Average outage per feeder, circle and division wise, highest first */
+function pdfAverage(){
+  var P = newPdf('Average outage per feeder', 'Circle and division wise, highest first. ' + asOnText());
+  discomsHere().forEach(function(nm, k){
+    if (k > 0){ P.doc.addPage(); P.y = 56; }
+    var col = DISCOM_HEX[nm], S = sumOf(nm);
+    var d0 = P.doc; ink(d0, col); d0.setFont('helvetica', 'bold'); d0.setFontSize(16); need(P, 70); d0.text(nm, PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont('helvetica', 'normal'); d0.setFontSize(9.5);
+    d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder' + (num(S.days) > 1 ? ' per day' : '') + ', ' + int(S.over) + ' feeders over 4 hours, ' + int(S.total) + ' feeders', PM, P.y + 19);
+    P.y += 40;
+    var allDiv = DATA.divisions.filter(function(r){ return String(r.discom) === nm; });
+    var circ = DATA.circles.filter(function(r){ return String(r.discom) === nm; })
+      .sort(function(a, b){ return num(b.avgMin) - num(a.avgMin) || String(a.circle).localeCompare(String(b.circle)); });
+    var head = ['Rank', '', 'Total feeders', 'Feeders with outage', 'Interruptions per feeder', 'Over 4 hrs', 'Average outage (hr:min)', 'Status'];
+    var cols = {0:{halign:'center', cellWidth:32}, 1:{halign:'left'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right', cellWidth:96}, 7:{halign:'center'}};
+    heading(P, 'Circles, highest average outage first', col);
+    table(P, ['Rank', 'Circle', 'Divisions'].concat(head.slice(2)),
+      circ.map(function(r, i){
+        var dn = allDiv.filter(function(x){ return String(x.circle) === String(r.circle); }).length;
+        return [String(i + 1), cell(String(r.circle), null, {bold:true}), String(dn), int(r.total), int(r.n), dec(r.avgEv, 2), int(r.over),
+                cell(hhmm(r.avgMin), num(r.avgMin), {bold:true, colour:col}), st(r.avgMin, yes(r.received))]; }),
+      {bar:7, cols:{0:{halign:'center', cellWidth:32}, 1:{halign:'left'}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right', cellWidth:96}, 8:{halign:'center'}}});
+    var live = allDiv.filter(function(r){ return yes(r.received); })
+      .sort(function(a, b){ return num(b.avgMin) - num(a.avgMin) || String(a.division).localeCompare(String(b.division)); });
+    var dead = allDiv.filter(function(r){ return !yes(r.received); });
+    var nd = function(){ return cell('No data', null, {dim:true}); };
+    heading(P, 'Divisions, highest average outage first', col);
+    table(P, ['Rank', 'Division', 'Circle'].concat(head.slice(2)),
+      live.map(function(r, i){
+        return [String(i + 1), cell(String(r.division), null, {bold:true}), String(r.circle), int(r.total), int(r.n), dec(r.avgEv, 2), int(r.over),
+                cell(hhmm(r.avgMin), num(r.avgMin), {bold:true, colour:col}), st(r.avgMin)]; })
+      .concat(dead.map(function(r){
+        return [cell('-', null, {dim:true}), cell(String(r.division), null, {bold:true}), String(r.circle), int(r.total), nd(), nd(), nd(), nd(), st(0, false)]; })),
+      {bar:7, cols:{0:{halign:'center', cellWidth:32}, 1:{halign:'left'}, 2:{halign:'left'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right', cellWidth:96}, 8:{halign:'center'}}});
+  });
+  finish(P, 'Average_Outage_' + fileDay() + '.pdf');
+}
+
+/* 3. Feeders with the longest total outage */
+function pdfFeeders(){
+  var P = newPdf('Feeders with the most outage', asOnText(), true);
+  discomsHere().forEach(function(nm, k){
+    if (k > 0){ P.doc.addPage(); P.y = 56; }
+    var col = DISCOM_HEX[nm];
+    var list = DATA.ranks.filter(function(r){ return String(r.listFor) === nm && String(r.measure) === 'Outage' && String(r.side) === 'Top'; })
+      .sort(function(a, b){ return num(a.rank) - num(b.rank); });
+    heading(P, nm + ': ' + list.length + ' feeders with the longest total outage', col);
+    if (!list.length){ para(P, 'No feeder figures.'); return; }
+    table(P, ['Rank', 'Feeder', 'Substation', 'Division', 'Circle', 'Type', 'Total outage\n(hr:min)', 'Interruptions', 'Min per\ninterruption'],
+      list.map(function(r){
+        return [String(num(r.rank)), cell(String(r.feeder), null, {bold:true}), String(r.ss), String(r.division), String(r.circle), String(r.type),
+                cell(hhmm(r.min), num(r.min), {bold:true, colour:col}), int(r.ev), dec(r.mpi, 1)]; }),
+      {bar:6, size:8.4, tight:true, cols:{0:{halign:'center', cellWidth:34}, 1:{halign:'left', cellWidth:160}, 2:{halign:'left', cellWidth:124}, 3:{halign:'left', cellWidth:110}, 4:{halign:'left', cellWidth:80}, 5:{halign:'left', cellWidth:50},
+                            6:{halign:'right', cellWidth:80}, 7:{halign:'right', cellWidth:72}, 8:{halign:'right'}}});
+  });
+  finish(P, 'Most_Outage_Feeders_' + fileDay() + '.pdf');
+}
+
+/* ---------- contacts ---------- */
+function nameKey(x){ return String(x).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+var CK = {}, DK = {};
+function setContacts(fromSheet){                 // fromSheet: {DISCOM: [[circle, division, post, name, mobile], ...] or null}
+  CK = {}; DK = {};
+  var own = {};
+  Object.keys(fromSheet || {}).forEach(function(dn){
+    var list = fromSheet[dn];
+    if (!list || !list.length) return;
+    own[dn] = true;
+    list.forEach(function(x){
+      var post = nameKey(x[2]), who = {name:x[3], mobile:x[4]};
+      if (post.indexOf('ESE') === 0 && !CK[dn + '|' + nameKey(x[0])]) CK[dn + '|' + nameKey(x[0])] = who;
+      if (post.indexOf('EEE') === 0 && x[1] && !DK[dn + '|' + nameKey(x[1])]) DK[dn + '|' + nameKey(x[1])] = who;
+    });
+  });
+  CONTACTS.circles.forEach(function(c){ if (!own[c[0]]) CK[c[0] + '|' + nameKey(c[1])] = {name:c[2], mobile:c[3]}; });
+  CONTACTS.divisions.forEach(function(c){ if (!own[c[0]]) DK[c[0] + '|' + nameKey(c[2])] = {name:c[3], mobile:c[4]}; });
+}
+setContacts(null);
+function eseOf(discom, circle){ return CK[String(discom) + '|' + nameKey(circle)] || null; }
+function eeeOf(discom, circle, division){ return DK[String(discom) + '|' + nameKey(division)] || null; }
+function telOf(n){ var x = String(n || '').replace(/[^0-9]/g, ''); if (x.length === 12 && x.slice(0, 2) === '91') x = x.slice(2); if (x.length === 11 && x.charAt(0) === '0') x = x.slice(1); return x.length === 10 ? '+91' + x : ''; }
+function showNo(n){ var t = telOf(n); return t ? t.slice(3, 8) + ' ' + t.slice(8) : ''; }
+function copyText(t){
+  try { if (navigator.clipboard && window.isSecureContext){ return navigator.clipboard.writeText(t).then(function(){ return true; }, function(){ return copyOld(t); }); } } catch (e) {}
+  return Promise.resolve(copyOld(t));
+}
+function copyOld(t){
+  var a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.position = 'fixed'; a.style.opacity = '0';
+  document.body.appendChild(a); a.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} document.body.removeChild(a); return ok;
+}
+function callHelp(name, no){                     // shown after a tap, in case the phone did not open its dialer
+  clearTimeout(toastTimer); $toast.textContent = '';
+  $toast.appendChild(el('span', {text:'Calling ' + name + ': ' + no + '. If the dialer did not open,'}));
+  var b = el('a', {href:'#', text:'Copy number', onclick:function(e){ e.preventDefault(); copyText(no.replace(/\s/g, '')).then(function(ok){ b.textContent = ok ? 'Copied' : 'Copy failed: dial ' + no; }); }});
+  $toast.appendChild(b);
+  $toast.classList.add('on');
+  toastTimer = setTimeout(function(){ $toast.classList.remove('on'); }, 9000);
+}
+function contactBox(role, place, who){
+  var tel = who ? telOf(who.mobile) : '';
+  var kids = [el('div', {class:'crole', text:role + (place ? ', ' + place : '')}),
+    who && who.name ? el('div', {class:'cname', text:who.name}) : null,
+    tel ? el('div', {class:'cline'}, [el('span', {class:'cnum', text:showNo(who.mobile)}), el('span', {class:'call', 'aria-hidden':'true'}, [icon('phone'), el('span', {class:'w', text:'Call'})])])
+        : el('div', {class:'cnone', text:'Number not in directory'})];
+  if (!tel) return el('div', {class:'cbox'}, kids);
+  // Inside Google's frame a link may not take over the page; it may only open a new window. So the dialer is opened that way.
+  return el('a', {class:'cbox tel', href:'tel:' + tel, 'aria-label':'Call ' + role + ', ' + place + (who.name ? ', ' + who.name : '') + ', ' + showNo(who.mobile),
+                  onclick:function(){ var no = showNo(who.mobile), nm = who.name || role; setTimeout(function(){ callHelp(nm, no); }, 700); }}, kids);
+}
+
+/* ---------- highest average outage (bottom 5 circles, 10 divisions, 10 feeders) ---------- */
+function bottomCircles(nm){
+  return DATA.circles.filter(function(r){ return String(r.discom) === nm && yes(r.received); })
+    .sort(function(a, b){ return num(b.avgMin) - num(a.avgMin) || String(a.circle).localeCompare(String(b.circle)); }).slice(0, 5);
+}
+function bottomDivisions(nm){
+  return DATA.divisions.filter(function(r){ return String(r.discom) === nm && yes(r.received) && yes(r.big); })
+    .sort(function(a, b){ return num(b.avgMin) - num(a.avgMin) || String(a.division).localeCompare(String(b.division)); }).slice(0, 10);
+}
+function bottomFeeders(nm){
+  return DATA.ranks.filter(function(r){ return String(r.listFor) === nm && String(r.measure) === 'Outage' && String(r.side) === 'Top' && num(r.rank) <= 10; })
+    .sort(function(a, b){ return num(a.rank) - num(b.rank); });
+}
+function discomFor(r){ return DATA.divisions.filter(function(x){ return String(x.discom) === String(r.discom) && String(x.division) === String(r.division); })[0]; }
+function renderBottom($c){
+  var list = scope === STATE_NAME ? discomsHere() : [scope];
+  $c.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Highest Average Outage'}),
+    el('span', {class:'chip s-serious'}, [el('i', {class:'dt', 'aria-hidden':'true'}), 'Highest first, with contact numbers']),
+    el('button', {class:'btn go pdfgo', onclick:function(){ runPdf('bottom'); }}, [icon('doc'), 'Export PDF'])]));
+  $c.appendChild(el('div', {class:'ctrl bfilter'}, [pills([{v:'all', t:'All'}, {v:'circles', t:'Circles'}, {v:'divisions', t:'Divisions'}, {v:'feeders', t:'Feeders'}], ui.bfilter,
+    function(v){ ui.bfilter = v; try { window.localStorage.setItem('feeder-outage-bfilter', v); } catch (e) {} render(); }, 'Show')]));
+  var showC = ui.bfilter === 'all' || ui.bfilter === 'circles', showD = ui.bfilter === 'all' || ui.bfilter === 'divisions', showF = ui.bfilter === 'all' || ui.bfilter === 'feeders';
+  list.forEach(function(nm){
+    var S = sumOf(nm); if (!S) return;
+    var sec = el('div', {class:'sec bsec', style:'--dc:' + colourOf(nm)});
+    sec.appendChild(el('div', {class:'bhead'}, [el('span', {class:'dot'}), el('h2', {text:nm}), chip(band(num(S.avgMin))),
+      el('span', {class:'count', text:hhmm(S.avgMin) + ' average outage per feeder, ' + int(S.total) + ' feeders'})]));
+    function row(i, main, value, boxes){
+      return el('div', {class:'brow'}, [el('div', {class:'no', text:String(i + 1)}), main, value, el('div', {class:'cboxes'}, boxes)]);
+    }
+    function val(min, sub){ return el('div', {class:'bv'}, [el('b', {text:hhmm(min)}), chip(band(num(min))), sub ? el('span', {class:'bvs', text:sub}) : null]); }
+    // circles
+    var cc = el('div', {class:'card bcard'}, [el('h3', {text:'Bottom 5 circles'}), el('div', {class:'sub3', text:'Average outage per feeder (hr:min), highest first'})]);
+    bottomCircles(nm).forEach(function(r, i){
+      var dn = DATA.divisions.filter(function(x){ return String(x.discom) === nm && String(x.circle) === String(r.circle); }).length;
+      cc.appendChild(row(i, el('div', {style:'min-width:0'}, [el('div', {class:'t1', text:String(r.circle)}),
+          el('div', {class:'t2', text:dn + ' divisions, ' + int(r.total) + ' feeders; ' + dec(r.avgEv, 2) + ' interruptions per feeder; ' + int(r.over) + ' over 4 hrs'})]),
+        val(r.avgMin), [contactBox('ESE Supply', String(r.circle), eseOf(nm, r.circle))]));
+    });
+    if (showC) sec.appendChild(cc);
+    // divisions
+    var dl = bottomDivisions(nm);
+    var dc = el('div', {class:'card bcard'}, [el('h3', {text:'Bottom 10 divisions'}), el('div', {class:'sub3', text:'Average outage per feeder (hr:min), highest first. Divisions with fewer than 10 feeders are not ranked.'})]);
+    dl.forEach(function(r, i){
+      dc.appendChild(row(i, el('div', {style:'min-width:0'}, [el('button', {class:'t1 link', text:String(r.division), onclick:function(){ openDivision(r, dl); }}),
+          el('div', {class:'t2', text:String(r.circle) + ' circle; ' + int(r.total) + ' feeders; ' + dec(r.avgEv, 2) + ' interruptions per feeder; ' + int(r.over) + ' over 4 hrs'})]),
+        val(r.avgMin), [contactBox('EEE Supply', String(r.division), eeeOf(nm, r.circle, r.division)), contactBox('ESE Supply', String(r.circle), eseOf(nm, r.circle))]));
+    });
+    if (showD) sec.appendChild(dc);
+    // feeders
+    var fl = bottomFeeders(nm);
+    var fc = el('div', {class:'card bcard'}, [el('h3', {text:'Bottom 10 feeders'}), el('div', {class:'sub3', text:'Total outage of the feeder (hr:min), highest first'})]);
+    if (!fl.length) fc.appendChild(el('div', {class:'empty', text:'No feeder figures'}));
+    fl.forEach(function(r, i){
+      var dv = discomFor(r);
+      fc.appendChild(row(i, el('div', {style:'min-width:0'}, [dv ? el('button', {class:'t1 link', text:String(r.feeder), onclick:function(){ openDivision(dv, [dv]); }}) : el('div', {class:'t1', text:String(r.feeder)}),
+          el('div', {class:'t2', text:[r.ss, r.division, r.circle, r.type].filter(function(x){ return x !== '' && x !== undefined; }).join(', ')})]),
+        val(r.min, int(r.ev) + ' interruptions'), [contactBox('EEE Supply', String(r.division), eeeOf(nm, r.circle, r.division)), contactBox('ESE Supply', String(r.circle), eseOf(nm, r.circle))]));
+    });
+    if (showF) sec.appendChild(fc);
+    $c.appendChild(sec);
+  });
+}
+(function(){
+  Array.prototype.forEach.call(document.querySelectorAll('#pageNav button'), function(b){
+    b.addEventListener('click', function(){
+      ui.page = b.getAttribute('data-page');
+      try { window.localStorage.setItem('feeder-outage-page', ui.page); } catch (e) {}
+      if (DATA) render();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+})();
+
+/* 4. Highest average outage, with contact numbers */
+function pdfBottom(){
+  var P = newPdf('Highest Average Outage', 'Highest first, with contact numbers. ' + asOnText(), true);
+  var mob = function(w){ var t = w ? showNo(w.mobile) : ''; if (!t) return cell('Not in directory', null, {dim:true}); return cell((w.name ? w.name + '\n' : '') + t, null, {contact:{name:w.name || '', num:t, tel:telOf(w.mobile)}}); };
+  discomsHere().forEach(function(nm, k){
+    if (k > 0){ P.doc.addPage(); P.y = 56; }
+    var col = DISCOM_HEX[nm], S = sumOf(nm), d0 = P.doc;
+    need(P, 70); ink(d0, col); d0.setFont('helvetica', 'bold'); d0.setFontSize(16); d0.text(nm, PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont('helvetica', 'normal'); d0.setFontSize(9.5);
+    d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder, ' + int(S.total) + ' feeders', PM, P.y + 19); P.y += 40;
+    heading(P, 'Bottom 5 circles', col);
+    table(P, ['Rank', 'Circle', 'Total feeders', 'Interruptions per feeder', 'Over 4 hrs', 'Average outage (hr:min)', 'Status', 'ESE Supply'],
+      bottomCircles(nm).map(function(r, i){ return [String(i + 1), cell(String(r.circle), null, {bold:true}), int(r.total), dec(r.avgEv, 2), int(r.over),
+        cell(hhmm(r.avgMin), num(r.avgMin), {bold:true, colour:col}), st(r.avgMin), mob(eseOf(nm, r.circle))]; }),
+      {bar:5, tight:true, cols:{0:{halign:'center', cellWidth:34}, 1:{halign:'left'}, 2:{halign:'center'}, 3:{halign:'center'}, 4:{halign:'center'}, 5:{halign:'center', cellWidth:100}, 6:{halign:'center'}, 7:{halign:'center', cellWidth:150}}});
+    heading(P, 'Bottom 10 divisions (divisions with 10 or more feeders)', col);
+    table(P, ['Rank', 'Division', 'Circle', 'Total feeders', 'Interruptions per feeder', 'Over 4 hrs', 'Average outage (hr:min)', 'Status', 'EEE Supply', 'ESE Supply'],
+      bottomDivisions(nm).map(function(r, i){ return [String(i + 1), cell(String(r.division), null, {bold:true}), String(r.circle), int(r.total), dec(r.avgEv, 2), int(r.over),
+        cell(hhmm(r.avgMin), num(r.avgMin), {bold:true, colour:col}), st(r.avgMin), mob(eeeOf(nm, r.circle, r.division)), mob(eseOf(nm, r.circle))]; }),
+      {bar:6, tight:true, cols:{0:{halign:'center', cellWidth:34}, 1:{halign:'left'}, 2:{halign:'left'}, 3:{halign:'center'}, 4:{halign:'center'}, 5:{halign:'center'}, 6:{halign:'center', cellWidth:84}, 7:{halign:'center'}, 8:{halign:'center', cellWidth:120}, 9:{halign:'center', cellWidth:120}}});
+    heading(P, 'Bottom 10 feeders (longest total outage)', col);
+    table(P, ['Rank', 'Feeder', 'Substation', 'Division', 'Circle', 'Total outage (hr:min)', 'Interruptions', 'EEE Supply', 'ESE Supply'],
+      bottomFeeders(nm).map(function(r){ return [String(num(r.rank)), cell(String(r.feeder), null, {bold:true}), String(r.ss), String(r.division), String(r.circle),
+        cell(hhmm(r.min), num(r.min), {bold:true, colour:col}), int(r.ev), mob(eeeOf(nm, r.circle, r.division)), mob(eseOf(nm, r.circle))]; }),
+      {bar:5, tight:true, size:8, cols:{0:{halign:'center', cellWidth:30}, 1:{halign:'left', cellWidth:118}, 2:{halign:'left', cellWidth:92}, 3:{halign:'left'}, 4:{halign:'left'}, 5:{halign:'center', cellWidth:90}, 6:{halign:'center', cellWidth:66}, 7:{halign:'center', cellWidth:112}, 8:{halign:'center', cellWidth:112}}});
+  });
+  finish(P, 'Highest_Average_Outage_' + fileDay() + '.pdf');
+}
+
+var MAKERS = {daily:pdfDaily, avg:pdfAverage, feeders:pdfFeeders, bottom:pdfBottom};
+function runPdf(kind){
+  if (!DATA){ toast('The figures are still loading. Try again in a moment.'); return; }
+  toast('Making the PDF ...');
+  pdfLibs().then(function(){
+    try { MAKERS[kind](); }
+    catch (err){ note('pdf failed', err); toast('Could not make the PDF. Please try again.'); }
+  }, function(err){ note('pdf tools did not load', err); toast('Could not make the PDF: check the internet connection and try again.'); });
+}
+/* the PDF menu */
+(function(){
+  var btn = document.getElementById('pdfBtn'), menu = document.getElementById('pdfMenu');
+  function close(){ menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+  btn.addEventListener('click', function(e){ e.stopPropagation(); var open = menu.hidden; menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button').focus(); });
+  document.addEventListener('click', function(e){ if (!menu.hidden && !menu.contains(e.target)) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !menu.hidden){ close(); btn.focus(); } });
+  Array.prototype.forEach.call(menu.querySelectorAll('button[data-pdf]'), function(b){
+    b.addEventListener('click', function(){ close(); runPdf(b.getAttribute('data-pdf')); });
+  });
+})();
+
+load();
+})();
+</script>
+</body>
+</html>
