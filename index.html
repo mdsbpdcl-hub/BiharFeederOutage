@@ -897,7 +897,7 @@ function showState(kind){
 function note(what, detail){ try { console.warn('[dashboard] ' + what, detail || ''); } catch (e) {} }
 /* The last figures seen on this device are shown at once while the latest are fetched (a convenience only:
    the latest always replace them, and nothing depends on this copy). */
-var SAVED_KEY = 'feeder-outage-last-figures', fromSaved = false;
+var SAVED_KEY = 'feeder-outage-last-figures', fromSaved = false, loadNo = 0;
 function show(p){                                 // true when the figures could be drawn
   if (!p || !p.ok || !p.discoms) return 'error';
   var d = build(p);
@@ -920,7 +920,9 @@ function load(fresh){
     if (!shown) showState('loading');
   }
   if (DATA) $content.classList.add('fade');
+  var my = ++loadNo;                              // only the answer to the latest request is used
   google.script.run.withSuccessHandler(function(p){
+    if (my !== loadNo) return;
     $content.classList.remove('fade');
     var r = 'error';
     try { r = show(p); } catch (e) { note('draw failed', e); r = 'error'; }
@@ -930,9 +932,11 @@ function load(fresh){
       return;
     }
     note('load failed', p);
-    if (fromSaved && DATA) { toast('Could not load the latest figures. These are the last figures seen on this device.'); return; }
-    showState(r === 'empty' ? 'empty' : 'error');
+    if (r === 'empty') { try { window.localStorage.removeItem(SAVED_KEY); } catch (e) {} DATA = null; showState('empty'); return; }
+    if (DATA) { toast(fromSaved ? 'Could not load the latest figures. These are the last figures seen on this device.' : 'Could not load the latest figures. Please try again in a moment.'); return; }
+    showState('error');
   }).withFailureHandler(function(err){
+    if (my !== loadNo) return;
     $content.classList.remove('fade'); note('load failed', err);
     if (DATA) { toast(fromSaved ? 'Could not load the latest figures. These are the last figures seen on this device.' : 'Could not load the latest figures. Please try again in a moment.'); return; }
     showState('error');
