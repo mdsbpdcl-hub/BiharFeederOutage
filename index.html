@@ -895,25 +895,50 @@ function showState(kind){
   $state.appendChild(card);
 }
 function note(what, detail){ try { console.warn('[dashboard] ' + what, detail || ''); } catch (e) {} }
-function load(){
-  if (DATA) $content.classList.add('fade'); else showState('loading');
+/* The last figures seen on this device are shown at once while the latest are fetched (a convenience only:
+   the latest always replace them, and nothing depends on this copy). */
+var SAVED_KEY = 'feeder-outage-last-figures', fromSaved = false;
+function show(p){                                 // true when the figures could be drawn
+  if (!p || !p.ok || !p.discoms) return 'error';
+  var d = build(p);
+  if (d === false) return 'error';
+  if (!d) return 'empty';
+  DATA = d;
+  var cs = {}; Object.keys(p.discoms).forEach(function(dn){ cs[dn] = p.discoms[dn] ? p.discoms[dn].contacts : null; }); setContacts(cs);
+  if (DATA.scopes.indexOf(scope) < 0) scope = DATA.scopes[0];
+  $state.hidden = true; $content.hidden = false; document.getElementById('pageNav').hidden = false;
+  render();
+  return true;
+}
+function load(fresh){
+  if (!DATA) {
+    var saved = null;
+    try { saved = JSON.parse(window.localStorage.getItem(SAVED_KEY) || 'null'); } catch (e) { saved = null; }
+    var shown = false;
+    if (saved) { try { shown = show(saved) === true; } catch (e) { shown = false; DATA = null; } }
+    fromSaved = shown;
+    if (!shown) showState('loading');
+  }
+  if (DATA) $content.classList.add('fade');
   google.script.run.withSuccessHandler(function(p){
     $content.classList.remove('fade');
-    if (!p || !p.ok || !p.discoms){ note('load failed', p); showState('error'); return; }
-    var d = build(p);
-    if (d === false){ showState('error'); return; }
-    if (!d){ note('nothing to show yet', p); showState('empty'); return; }
-    DATA = d;
-    var cs = {}; Object.keys(p.discoms).forEach(function(dn){ cs[dn] = p.discoms[dn] ? p.discoms[dn].contacts : null; }); setContacts(cs);
-    if (DATA.scopes.indexOf(scope) < 0) scope = DATA.scopes[0];
-    $state.hidden = true; $content.hidden = false; document.getElementById('pageNav').hidden = false;
-    render();
+    var r = 'error';
+    try { r = show(p); } catch (e) { note('draw failed', e); r = 'error'; }
+    if (r === true) {
+      fromSaved = false;
+      try { window.localStorage.setItem(SAVED_KEY, JSON.stringify(p)); } catch (e) { try { window.localStorage.removeItem(SAVED_KEY); } catch (e2) {} }
+      return;
+    }
+    note('load failed', p);
+    if (fromSaved && DATA) { toast('Could not load the latest figures. These are the last figures seen on this device.'); return; }
+    showState(r === 'empty' ? 'empty' : 'error');
   }).withFailureHandler(function(err){
     $content.classList.remove('fade'); note('load failed', err);
+    if (DATA) { toast(fromSaved ? 'Could not load the latest figures. These are the last figures seen on this device.' : 'Could not load the latest figures. Please try again in a moment.'); return; }
     showState('error');
-  }).getDashboardData();
+  }).getDashboardData(fresh === true);
 }
-document.getElementById('refreshBtn').addEventListener('click', function(){ this.classList.toggle('spin'); load(); });
+document.getElementById('refreshBtn').addEventListener('click', function(){ this.classList.toggle('spin'); load(true); });
 
 /* ---------- colour themes ---------- */
 function hex(h){ h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
