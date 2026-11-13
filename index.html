@@ -751,7 +751,7 @@ function ext(a, b){ var o = {}; for (var k in a) o[k] = a[k]; for (var j in b) o
 var DATA = null, scope = STATE_NAME, firstDraw = true;
 var ui = {sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
           ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'overview', bfilter:'all'};
-try { if (window.localStorage.getItem('feeder-outage-page') === 'bottom') ui.page = 'bottom'; var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
+try { window.localStorage.removeItem('feeder-outage-page'); var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
 
 function buildOne(payload){                  // the figures of one DISCOM
   var t = {};
@@ -2117,7 +2117,6 @@ function renderBottom($c){
   Array.prototype.forEach.call(document.querySelectorAll('#pageNav button'), function(b){
     b.addEventListener('click', function(){
       ui.page = b.getAttribute('data-page');
-      try { window.localStorage.setItem('feeder-outage-page', ui.page); } catch (e) {}
       if (DATA) render();
       window.scrollTo({top:0, behavior:'smooth'});
     });
