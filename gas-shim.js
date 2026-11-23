@@ -17,6 +17,8 @@
   }
   var early = linkOk ? fetchData(false) : null;   // started before the page script runs
   if (early) early.catch(function () {});
+  var earlyArea = linkOk ? fetchData(false, "area") : null;   // Supply by Area opens first
+  if (earlyArea) earlyArea.catch(function () {});
 
   function runner(ok, bad) {
     return {
@@ -28,7 +30,9 @@
         p.then(function (d) { if (ok) ok(d); }, function (e) { try { console.warn("[dashboard]", e.message); } catch (x) {} if (bad) bad(e); });
       },
       getAreaData: function (fresh) {            // the Supply by Area page
-        fetchData(!!fresh, "area").then(function (d) { if (ok) ok(d); }, function (e) { try { console.warn("[dashboard]", e.message); } catch (x) {} if (bad) bad(e); });
+        var p = (!fresh && earlyArea) ? earlyArea : fetchData(!!fresh, "area");
+        earlyArea = null;
+        p.then(function (d) { if (ok) ok(d); }, function (e) { try { console.warn("[dashboard]", e.message); } catch (x) {} if (bad) bad(e); });
       }
     };
   }

@@ -648,9 +648,9 @@ table.st th{background:#f4f7f9}
 
 <main class="wrap" id="main">
   <nav class="pages" id="pageNav" role="tablist" aria-label="Pages" hidden>
-    <button role="tab" data-page="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-page="area" aria-selected="true">Supply by Area</button>
+    <button role="tab" data-page="overview" aria-selected="false">Overview</button>
     <button role="tab" data-page="bottom" aria-selected="false">Highest Average Outage</button>
-    <button role="tab" data-page="area" aria-selected="false">Supply by Area</button>
   </nav>
   <div class="state" id="state"></div>
   <div id="content" hidden></div>
@@ -906,8 +906,8 @@ function ext(a, b){ var o = {}; for (var k in a) o[k] = a[k]; for (var j in b) o
 
 var DATA = null, scope = STATE_NAME, firstDraw = true;
 var ui = {area:{district:'', block:'', feeder:'', sort:'low', more:false}, sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
-          ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'overview', bfilter:'all'};
-try { window.localStorage.removeItem('feeder-outage-page'); var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
+          ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'area', bfilter:'all'};
+try { window.localStorage.removeItem('feeder-outage-page');   /* the dashboard always opens on Supply by Area */ var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
 
 function buildOne(payload){                  // the figures of one DISCOM
   var t = {};
@@ -2254,7 +2254,7 @@ function loadArea(fresh){
 }
 function buildArea(p){
   if (!p || !p.ok || !p.discoms) return null;
-  var feeders = [], agri = [], info = {};
+  var feeders = [], agri = [], info = {}, uid = 0;
   (p.order || Object.keys(p.discoms)).forEach(function(dc){
     var x = p.discoms[dc];
     if (!x || x.error) return;
@@ -2263,7 +2263,7 @@ function buildArea(p){
     var one = function(r, isAgri){
       return {discom:dc, circle:String(r[0]), division:String(r[1]), district:String(r[2] || divDist[r[1]] || 'District not known'),
               block:String(r[3] || '') || NOT_TAGGED, ss:String(r[4]), name:String(r[5]), type:String(r[6]), id:String(r[7]),
-              ev:num(r[8]) / days, min:num(r[9]) / days, over:num(r[10]), w:1, agri:isAgri};
+              ev:num(r[8]) / days, min:num(r[9]) / days, over:num(r[10]), w:1, agri:isAgri, uid:'f' + (++uid)};
     };
     var list = (x.feeders || []).map(function(r){ return one(r, false); });
     list.forEach(function(f){ reg[f.division] = (reg[f.division] || 0) + 1; });
@@ -2280,12 +2280,13 @@ function buildArea(p){
   return {feeders:feeders, agri:agri, info:info};
 }
 function areaSum(list){
-  var s = {w:0, n:0, ev:0, min:0, over4:0, ten:0, over24:0, longest:null, bands:[0,0,0,0,0], count:0};
+  var s = {w:0, n:0, ev:0, min:0, over4:0, ten:0, over24:0, longest:null, bands:[0,0,0,0,0], count:0, overOnly:0};
   list.forEach(function(f){
     s.w += f.w; s.over24 += f.over;
     if (f.orphan) return;
     s.count++;
     s.ev += f.ev; s.min += f.min;
+    if (f.over > 0 && !(f.ev > 0 || f.min > 0)) s.overOnly++;    // only an over-24-hrs line: not counted, and not "full supply" either
     if (f.ev > 0 || f.min > 0){
       s.n++;
       if (f.min > 240) s.over4++;
@@ -2295,7 +2296,7 @@ function areaSum(list){
       for (var i = 1; i < SUPPLY_BANDS.length; i++) if (sup >= SUPPLY_BANDS[i].min || i === SUPPLY_BANDS.length - 1) { s.bands[i]++; break; }
     }
   });
-  s.bands[0] = Math.max(0, s.w - s.n);
+  s.bands[0] = Math.max(0, s.w - s.n - s.overOnly);
   s.avgMin = s.w ? s.min / s.w : 0;
   s.supply = 24 - s.avgMin / 60;
   s.avgEv = s.w ? s.ev / s.w : 0;
@@ -2364,11 +2365,11 @@ function renderArea($c){
   if (A.district && districts.indexOf(A.district) < 0) { A.district = ''; A.block = ''; A.feeder = ''; }
   var inD = A.district ? all.filter(function(f){ return f.district === A.district; }) : all;
   var blocks = A.district ? sorted(uniq(inD, function(f){ return f.block; })) : [];
-  if (blocks.indexOf(NOT_TAGGED) > 0) { blocks.splice(blocks.indexOf(NOT_TAGGED), 1); blocks.push(NOT_TAGGED); }
+  if (blocks.indexOf(NOT_TAGGED) >= 0) { blocks.splice(blocks.indexOf(NOT_TAGGED), 1); blocks.push(NOT_TAGGED); }   // always last
   if (A.block && blocks.indexOf(A.block) < 0) { A.block = ''; A.feeder = ''; }
   var inB = A.block ? inD.filter(function(f){ return f.block === A.block; }) : inD;
   var feeders = A.block ? inB.filter(function(f){ return !f.orphan; }).sort(function(a, b){ return a.name.localeCompare(b.name); }) : [];
-  var fsel = A.feeder ? feeders.filter(function(f){ return f.discom + '|' + f.id === A.feeder; })[0] : null;
+  var fsel = A.feeder ? feeders.filter(function(f){ return f.uid === A.feeder; })[0] : null;
   if (A.feeder && !fsel) A.feeder = '';
 
   function sel(label, value, opts, allText, on, off){
@@ -2384,7 +2385,7 @@ function renderArea($c){
     sel('DISCOM', discom, DATA.scopes.filter(function(s){ return s !== STATE_NAME; }), 'Bihar (both)', function(v){ scope = v || STATE_NAME; A.district = ''; A.block = ''; A.feeder = ''; render(); }),
     sel('District', A.district, districts, 'All districts (' + districts.length + ')', function(v){ A.district = v; A.block = ''; A.feeder = ''; render(); }),
     sel('Block', A.block, blocks, A.district ? 'All blocks (' + blocks.length + ')' : 'Choose a district first', function(v){ A.block = v; A.feeder = ''; render(); }, !A.district),
-    sel('Feeder', A.feeder, feeders.map(function(f){ return {v:f.discom + '|' + f.id, t:f.name + ' (' + f.ss + ')'}; }), A.block ? 'All feeders (' + feeders.length + ')' : 'Choose a block first',
+    sel('Feeder', A.feeder, feeders.map(function(f){ return {v:f.uid, t:f.name + ' (' + f.ss + ')'}; }), A.block ? 'All feeders (' + feeders.length + ')' : 'Choose a block first',
         function(v){ A.feeder = v; render(); }, !A.block),
     el('button', {class:'btn reset', text:'Reset', onclick:function(){ scope = STATE_NAME; A.district = ''; A.block = ''; A.feeder = ''; render(); }})
   ]));
@@ -2431,7 +2432,7 @@ function renderArea($c){
     stat('zap', 'Full 24 hrs supply', int(S.bands[0]), 'feeders with no outage'),
     stat('repeat', '10 or more interruptions', int(S.ten), 'feeders'),
     stat('clock', 'Outage in all', hhmm(S.min) + ' hr:min', 'counted feeders' + perDay),
-    stat('tower', A.block ? 'Substations' : (A.district ? 'Blocks' : 'Districts'), int(A.block ? uniq(inB.filter(function(f){ return !f.orphan; }), function(f){ return f.ss; }).length : (A.district ? blocks.length : districts.length)), discom || 'Bihar'),
+    stat('tower', A.block ? 'Substations' : (A.district ? 'Blocks' : 'Districts'), int(A.block ? uniq(inB.filter(function(f){ return !f.orphan; }), function(f){ return f.ss; }).length : (A.district ? blocks.filter(function(b){ return b !== NOT_TAGGED; }).length : districts.length)), discom || 'Bihar'),
     stat('alert', 'Over 24 hrs, left out', int(S.over24), 'feeder lines not counted')
   ]));
 
@@ -2468,13 +2469,13 @@ function renderArea($c){
   var level = A.block ? 'feeder' : (A.district ? 'block' : 'district');
   var title = {feeder:'Feeders of ' + A.block, block:'Blocks of ' + A.district, district:'Districts' + (discom ? ' of ' + discom : ' of Bihar')}[level];
   var groups = [];
-  if (level === 'feeder') groups = feeders.map(function(f){ return {name:f.name, sub:f.ss + ' · ' + f.type, s:areaSum([f]), go:f.discom + '|' + f.id, discom:f.discom}; });
+  if (level === 'feeder') groups = feeders.map(function(f){ return {name:f.name, sub:f.ss + ' · ' + f.type, s:areaSum([f]), go:f.uid, discom:f.discom}; });
   else {
     var by = {};
     inB.forEach(function(f){ var k = level === 'block' ? f.block : f.district; (by[k] = by[k] || []).push(f); });
     groups = Object.keys(by).map(function(k){
       var L = by[k], dcs = uniq(L, function(f){ return f.discom; });
-      var nb = uniq(L, function(f){ return f.block; }).length;
+      var nb = uniq(L, function(f){ return f.block; }).filter(function(b){ return b !== NOT_TAGGED; }).length;
       var sub = level === 'district' ? dcs.join(' and ') + ' · ' + nb + (nb === 1 ? ' block' : ' blocks')
                                      : (function(n){ return n + (n === 1 ? ' substation' : ' substations'); })(uniq(L.filter(function(f){ return !f.orphan; }), function(f){ return f.ss; }).length);
       return {name:k, sub:sub, s:areaSum(L), go:k, discom:dcs.length === 1 ? dcs[0] : ''};
@@ -2640,6 +2641,7 @@ function runPdf(kind){
 })();
 
 load();
+AREA_STATE = 'loading'; loadArea(false);          // Supply by Area opens first: its figures are asked for at once
 })();
 </script>
 </body>
