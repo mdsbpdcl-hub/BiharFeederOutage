@@ -650,8 +650,8 @@ table.st th{background:#f4f7f9}
 
 <main class="wrap" id="main">
   <nav class="pages" id="pageNav" role="tablist" aria-label="Pages" hidden>
-    <button role="tab" data-page="area" aria-selected="true">Supply by Area</button>
-    <button role="tab" data-page="overview" aria-selected="false">Overview</button>
+    <button role="tab" data-page="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-page="area" aria-selected="false">Supply by Area</button>
     <button role="tab" data-page="bottom" aria-selected="false">Highest Average Outage</button>
   </nav>
   <div class="state" id="state"></div>
@@ -908,8 +908,8 @@ function ext(a, b){ var o = {}; for (var k in a) o[k] = a[k]; for (var j in b) o
 
 var DATA = null, scope = STATE_NAME, firstDraw = true;
 var ui = {area:{district:'', block:'', feeder:'', sort:'low', more:false}, sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
-          ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'area', bfilter:'all'};
-try { window.localStorage.removeItem('feeder-outage-page');   /* the dashboard always opens on Supply by Area */ var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
+          ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'overview', bfilter:'all'};
+try { window.localStorage.removeItem('feeder-outage-page');   /* the dashboard always opens on Overview */ var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
 
 function buildOne(payload){                  // the figures of one DISCOM
   var t = {};
@@ -2660,7 +2660,7 @@ function runPdf(kind){
 })();
 
 load();
-AREA_STATE = 'loading'; loadArea(false);          // Supply by Area opens first: its figures are asked for at once
+AREA_STATE = 'loading'; loadArea(false);          // asked for at once, so Supply by Area opens without waiting
 })();
 </script>
 </body>
