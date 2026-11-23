@@ -6,7 +6,7 @@
 <title>Bihar 11 kV Feeder Outage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: light;
@@ -520,6 +520,100 @@ button.arow:hover{background:#f6f7fb}
 }
 @media (max-width:350px){.tiles{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* =====================================================================
+   Clean operations look (v2.3): flat white panels on a cool grey page,
+   hairline rules, one steel-blue accent, colour kept for status and DISCOM.
+   Only colours, borders, type and depth are set here; layout stays above.
+   ===================================================================== */
+:root{
+  --ink:#13263a; --ink2:#586a7d; --muted:#586a7d; --faint:#8b98a7; --line:#d9e0e7; --track:#e6ebf0; --page:#eef2f5; --card:#ffffff;
+  --shadow:none; --shadow-up:0 1px 0 rgba(19,38,58,.04),0 6px 16px -10px rgba(19,38,58,.28);
+  --sb:#2563a8; --nb:#c25a1c;
+  --rad:6px; --rad-s:4px;
+}
+body{font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;font-size:14.5px;background:var(--page)}
+body,.num,.kpi .val,.stat .v,.dialval .v,.tile .big{font-feature-settings:"tnum" 1}
+/* header: solid, ruled */
+.top{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--line)}
+.bolt{width:36px;height:36px;border-radius:var(--rad);background:var(--t1);box-shadow:none}
+.bolt svg{width:19px;height:19px}
+.brand h1{font-size:17px;font-weight:600;letter-spacing:0}
+.datepill{font-size:12.5px}
+.swatches{display:none}
+.seg{background:#fff;border:1px solid var(--line);border-radius:var(--rad);padding:2px}
+.seg button{border-radius:var(--rad-s);padding:6px 14px;min-height:32px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--t1);color:#fff;box-shadow:none}
+.refresh{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:var(--rad);box-shadow:none;height:36px}
+.refresh svg{color:var(--t1)}
+.refresh:hover{filter:none;background:#f4f7f9}
+.pdfbtn{border-radius:var(--rad);box-shadow:none;height:36px}
+.pdfmenu{border-radius:var(--rad)}
+.pdfmenu .pi{border-radius:var(--rad-s);background:#e8f1f6}
+/* page tabs: underline */
+.pages{background:transparent;border-radius:0;padding:0;gap:0;border-bottom:1px solid var(--line);width:100%;margin-bottom:20px}
+.pages button{border-radius:0;padding:10px 18px;min-height:44px;font-weight:500;font-size:14.5px;border-bottom:3px solid transparent;margin-bottom:-1px}
+.pages button[aria-selected="true"]{background:transparent;box-shadow:none;color:var(--ink);font-weight:600;border-bottom-color:var(--t1)}
+main.wrap{padding-top:16px}
+/* panels */
+.card,.stat,.pk,.statecard{border-radius:var(--rad);box-shadow:none;border:1px solid var(--line)}
+.sechead h2{font-size:17px;font-weight:600;letter-spacing:0}
+.card h3{font-size:14.5px;font-weight:600}
+.count{border-radius:var(--rad-s)}
+/* readouts: flat, with a measure rule on the left */
+.kpi{background:#fff;border:1px solid var(--line);border-left:4px solid var(--kc);border-radius:var(--rad);box-shadow:none;min-height:0}
+.kpi .ico{width:30px;height:30px;border-radius:var(--rad-s);background:transparent;color:var(--kc);box-shadow:none}
+.kpi .ico svg{width:19px;height:19px}
+.kpi .lab{font-weight:500}
+.kpi .val{font-size:30px;font-weight:600;letter-spacing:-.5px}
+.kpi .move{border-radius:var(--rad-s);background:#f4f7f9}
+.stat .ic{border-radius:var(--rad-s);background:#e8f1f6;color:var(--t1);width:30px;height:30px}
+.stat .v{font-size:20px;font-weight:600}
+/* meters: plain arc, no needle */
+.needle{display:none}
+.dialbox svg > circle,.dcard .mini svg > circle,.pdial .mini svg > circle{display:none}
+.dialval .v,.supval .v{font-weight:600;letter-spacing:-1.5px}
+.dcard{border-radius:var(--rad);padding-left:22px}
+.dcard::before{width:4px}
+.dcard:hover,.tile:hover{transform:none;box-shadow:none;border-color:#b9c6d3}
+/* chips, buttons, controls */
+.chip{border-radius:var(--rad-s);padding:3px 9px;font-weight:500}
+button.chip:hover{transform:none}
+.btn,.ctrl select,.ctrl input,.afilters select{border-radius:var(--rad);box-shadow:none}
+.btn.go,.call,.toast a{background:var(--t1);border:0}
+.btn.go:hover,.call:hover{filter:none;background:#085a79}
+.pills{border-radius:var(--rad);background:#fff;border:1px solid var(--line);padding:2px}
+.pills button{border-radius:var(--rad-s);font-weight:500;min-height:30px}
+.pills button[aria-pressed="true"]{background:#e8f1f6;color:var(--t1);box-shadow:none;font-weight:600}
+/* bars and charts: straight ends */
+.trk,.fill{border-radius:2px}
+.colw .bar{border-radius:3px 3px 0 0}
+.stackbar,.abands{border-radius:2px}
+/* division tiles: white, status shown by the rule and the chip */
+.tile{background:#fff;border:1px solid var(--line);border-top:3px solid var(--sc);border-radius:var(--rad);box-shadow:none}
+.tile .rkb{border-radius:var(--rad-s)}
+.tile .big{font-weight:600}
+/* lists */
+.rrow,.arow,button.arow{border-radius:var(--rad-s)}
+.rrow .no,.brow .no{border-radius:var(--rad-s)}
+.bcard{border-left-width:4px}
+.cbox{border-radius:var(--rad-s);background:#f6f8fa}
+.call{border-radius:var(--rad-s)}
+/* detail panel */
+.veil{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(19,38,58,.32)}
+.panel{border-radius:0;box-shadow:-12px 0 32px -16px rgba(19,38,58,.45)}
+.phead{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+.iconbtn{border-radius:var(--rad);box-shadow:none}
+.tbox{border-radius:var(--rad-s)}
+table.st th{background:#f4f7f9}
+.tip,.toast{border-radius:var(--rad)}
+.stateico{border-radius:var(--rad);background:#e8f1f6}
+/* Supply by Area */
+.agcard{background:#fff;border:1px solid var(--line);border-left:4px solid #6c9a3a}
+.agcard .tag{border-radius:var(--rad-s)}
+.alegend div{border-left-width:3px}
+@media (max-width:680px){ .pages button{flex:1 1 0;padding:9px 6px;font-size:13.5px;line-height:1.25} }
+/* no entrance animation: figures appear at once */
+.intro > *{animation:none}
 </style>
 </head>
 <body data-theme="sunrise">
@@ -586,8 +680,7 @@ var BANDS = [                       // average outage per feeder, in minutes. Ea
 var DIAL_MAX = 180;                 // the meter runs from 0 to 3 hours
 var STATE_NAME = 'BIHAR';
 var DISCOM_COLOUR = {SBPDCL:'var(--sb)', NBPDCL:'var(--nb)'};
-var THEMES = [{v:'sky', t:'Sky', a:'#2f7df6', b:'#22c1dc'}, {v:'mint', t:'Mint', a:'#0a9b85', b:'#4eb068'},
-              {v:'sunrise', t:'Sunrise', a:'#f0752f', b:'#f7a531'}, {v:'lavender', t:'Lavender', a:'#7a65c2', b:'#e27aab'}];
+var THEMES = [{v:'grid', t:'Grid', a:'#0a6a8f', b:'#2e8fb3'}];   // one fixed light look
 var THEME_KEY = 'feeder-outage-theme';
 var ICON = {
   zap:'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/>',
@@ -1018,7 +1111,7 @@ function rgba(h, a){ var x = hex(h); return 'rgba(' + x.join(',') + ',' + a + ')
   var box = document.getElementById('themes'), saved = null, root = document.documentElement;
   try { saved = window.localStorage.getItem(THEME_KEY); } catch (e) {}
   function apply(v){
-    var t = THEMES.filter(function(x){ return x.v === v; })[0] || THEMES[2];
+    var t = THEMES.filter(function(x){ return x.v === v; })[0] || THEMES[0];
     document.body.setAttribute('data-theme', t.v);
     var set = function(k, val){ root.style.setProperty(k, val); };
     set('--t1', t.a); set('--t2', t.b); set('--t1a', rgba(t.a, .16)); set('--t2a', rgba(t.b, .14)); set('--t1s', rgba(t.a, .09));
@@ -1032,7 +1125,7 @@ function rgba(h, a){ var x = hex(h); return 'rgba(' + x.join(',') + ',' + a + ')
   THEMES.forEach(function(t){
     box.appendChild(el('button', {'data-v':t.v, title:t.t, 'aria-label':t.t + ' theme', style:'background:linear-gradient(135deg,' + t.a + ',' + t.b + ')', onclick:function(){ apply(t.v); }}));
   });
-  apply(THEMES.some(function(t){ return t.v === saved; }) ? saved : 'sunrise');
+  apply('grid');
 })();
 
 /* ---------- tooltip + motion ---------- */
