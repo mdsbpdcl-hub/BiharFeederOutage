@@ -430,6 +430,8 @@ button.arow:hover{background:#f6f7fb}
 .fcard .fname{font-size:22px;font-weight:700;letter-spacing:-.3px;line-height:1.2;overflow-wrap:anywhere}
 .fcard .fplace{font-size:13.5px;color:var(--ink2);margin-top:4px}
 .areawait{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px 16px;color:var(--ink2)}
+.areawait{text-align:left;max-width:640px;margin:0 auto}
+.areawait svg{flex:none;width:22px;height:22px;color:var(--warn-t)}
 .areawait .sp{width:20px;height:20px;border:2.5px solid var(--t1a);border-top-color:var(--t1);border-radius:50%;animation:aspin .8s linear infinite}
 @keyframes aspin{to{transform:rotate(360deg)}}
 @media (max-width:1080px){
@@ -2353,7 +2355,9 @@ function supplyDial(h){
 }
 function areaWait($c, text, retry){
   var box = el('div', {class:'card'}, [el('div', {class:'areawait', role:'status'}, retry ? [icon('alert'), text] : [el('span', {class:'sp', 'aria-hidden':'true'}), text])]);
-  if (retry) box.appendChild(el('div', {style:'text-align:center;padding-bottom:12px'}, [el('button', {class:'btn go', text:'Try again', onclick:function(){ AREA_STATE = 'loading'; loadArea(true); render(); }})]));
+  if (retry) box.appendChild(el('div', {style:'display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding-bottom:12px'}, [
+    el('button', {class:'btn go', text:'Try again', onclick:function(){ AREA_STATE = 'loading'; loadArea(true); render(); }}),
+    AREA && AREA.empty ? el('a', {class:'btn', href:'https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html', target:'_blank', rel:'noopener', text:'Open the update page', style:'text-decoration:none;display:inline-flex;align-items:center'}) : null]));
   $c.appendChild(box);
 }
 function sorted(arr){ return arr.slice().sort(function(a, b){ return a.localeCompare(b); }); }
