@@ -17,6 +17,9 @@ def swap(old, new, count=1):
 
 swap('<base target="_top">\n', '')
 swap("href:'tel:' + tel, target:'_blank', rel:'noopener', ", "href:'tel:' + tel, ")
-swap('<script>\n', '<script src="config.js"></script>\n<script src="gas-shim.js"></script>\n<script>\n')
+import hashlib
+def stamp(name):                                  # a new file name for each new version, so no browser keeps an old copy
+    return hashlib.md5(open(os.path.join(here, name), "rb").read()).hexdigest()[:8]
+swap('<script>\n', '<script src="config.js?v=%s"></script>\n<script src="gas-shim.js?v=%s"></script>\n<script>\n' % (stamp("config.js"), stamp("gas-shim.js")))
 open(os.path.join(here, "index.html"), "w", encoding="utf-8", newline="\n").write(html)
 print("index.html written (%d bytes)." % len(html.encode("utf-8")))

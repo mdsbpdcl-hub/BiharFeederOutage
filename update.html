@@ -281,7 +281,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--t1)}
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js"></script>
+<script src="config.js?v=2.3"></script>
 <script>
 "use strict";
 var URL_ = ((window.OUTAGE_CONFIG || {}).WEB_APP_URL || "").trim();
@@ -343,7 +343,7 @@ if (!LINK_OK) $("noLink").hidden = false;
 var worker = null, wid = 0, waiting = {};
 function startWorker(){
   if (worker) return;
-  worker = new Worker("worker.js");
+  worker = new Worker("worker.js?v=2.3");      // the version makes browsers fetch a new copy after an update
   worker.onmessage = function(ev){
     var m = ev.data;
     if (m.kind === "log") { addLog(m.level, m.text); return; }

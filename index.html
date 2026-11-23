@@ -664,8 +664,8 @@ table.st th{background:#f4f7f9}
 <div class="tip" id="tip" role="status"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js"></script>
-<script src="gas-shim.js"></script>
+<script src="config.js?v=a12a9054"></script>
+<script src="gas-shim.js?v=c56979c3"></script>
 <script>
 (function(){
 'use strict';
@@ -2235,22 +2235,37 @@ var SUPPLY_BANDS = [            // hours of supply in the day, for feeders; each
   {min:16,  name:'16 to 20 hrs',  colour:'var(--serious)'},
   {min:-1,  name:'Under 16 hrs',  colour:'var(--crit)'}
 ];
+/* The last Supply by Area figures seen on this device are shown at once while the latest are fetched
+   (a convenience only: the latest always replace them). */
+var AREA_KEY = 'feeder-outage-last-area';
 function loadArea(fresh){
-  if (!(window.google && google.script && google.script.run && google.script.run.withSuccessHandler)) { AREA_STATE = 'error'; return; }
   var my = ++areaNo;
-  if (!AREA) AREA_STATE = 'loading';
-  google.script.run.withSuccessHandler(function(p){
-    if (my !== areaNo) return;
-    var a = null;
-    try { a = buildArea(p); } catch (e) { note('area build failed', e); a = null; }
-    if (a) { AREA = a; AREA_STATE = 'ready'; } else if (!AREA) AREA_STATE = 'error';
-    if (ui.page === 'area' && DATA) render();
-  }).withFailureHandler(function(err){
+  if (!AREA) {
+    try { var kept = JSON.parse(window.localStorage.getItem(AREA_KEY) || 'null'); var ka = kept && buildArea(kept); if (ka && !ka.empty) { AREA = ka; AREA_STATE = 'ready'; } } catch (e) { AREA = null; }
+    if (!AREA) AREA_STATE = 'loading';
+  }
+  function failed(err){
     if (my !== areaNo) return;
     note('area load failed', err);
-    if (!AREA) AREA_STATE = 'error'; else toast('Could not load the latest figures. Please try again in a moment.');
+    if (!AREA) AREA_STATE = 'error'; else toast('Could not load the latest figures. These are the last figures seen on this device.');
     if (ui.page === 'area' && DATA) render();
-  }).getAreaData(fresh === true);
+  }
+  var run = window.google && google.script && google.script.run;
+  if (!run || typeof run.withSuccessHandler !== 'function') { failed('no link'); return; }
+  try {
+    var r = run.withSuccessHandler(function(p){
+      if (my !== areaNo) return;
+      var a = null;
+      try { a = buildArea(p); } catch (e) { note('area build failed', e); a = null; }
+      if (a) {
+        AREA = a; AREA_STATE = 'ready';
+        try { if (!a.empty) window.localStorage.setItem(AREA_KEY, JSON.stringify(p)); } catch (e) { try { window.localStorage.removeItem(AREA_KEY); } catch (e2) {} }
+      } else if (!AREA) AREA_STATE = 'error';
+      if (ui.page === 'area' && DATA) render();
+    }).withFailureHandler(failed);
+    if (typeof r.getAreaData !== 'function') { failed('an old copy of the page is open'); return; }   // an old page script still in the browser
+    r.getAreaData(fresh === true);
+  } catch (e) { failed(e); }
 }
 function buildArea(p){
   if (!p || !p.ok || !p.discoms) return null;
@@ -2276,7 +2291,7 @@ function buildArea(p){
     agri = agri.concat((x.agri || []).map(function(r){ return one(r, true); }));
     info[dc] = {days:days, from:x.from, upto:x.upto};
   });
-  if (!feeders.length) return {feeders:[], agri:[], info:info, empty:true};
+  if (!feeders.some(function(f){ return !f.orphan; })) return {feeders:[], agri:[], info:info, empty:true};   // no feeder figures sent yet
   return {feeders:feeders, agri:agri, info:info};
 }
 function areaSum(list){
@@ -2349,12 +2364,12 @@ function renderArea($c){
     el('span', {class:'chip'}, [icon('clock'), 'Average supply = 24 hrs less average outage'])]));
   if (!AREA){
     if (AREA_STATE === 'none') { AREA_STATE = 'loading'; loadArea(false); }
-    if (AREA_STATE === 'error') areaWait($c, 'Could not load the figures of this page.', true);
+    if (AREA_STATE === 'error') areaWait($c, 'Could not load the figures of this page. Press Try again; if it stays, reload the page.', true);
     else areaWait($c, 'Loading the figures of every district and block ...');
     return;
   }
   if (AREA.empty){
-    areaWait($c, 'No feeder figures yet. They come with the next report sent from the update page.', true);
+    areaWait($c, 'No feeder figures yet. Send the next report from the browser update page, then press Refresh.', true);
     return;
   }
   var A = ui.area, discom = scope === STATE_NAME ? '' : scope;
