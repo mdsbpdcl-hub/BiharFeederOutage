@@ -382,6 +382,68 @@ table.st tr:last-child td{border-bottom:0}
 .intro > *:nth-child(2){animation-delay:.08s}.intro > *:nth-child(n+3){animation-delay:.16s}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
+/* ---------- Supply by Area ---------- */
+.afilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:end;margin-bottom:12px}
+.afilters label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--ink2);min-width:0}
+.afilters select{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 32px 8px 12px;min-height:42px;width:100%;min-width:0;
+  box-shadow:var(--shadow);color:var(--ink);font-weight:500;appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink2) 50%),linear-gradient(135deg,var(--ink2) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.afilters select:disabled{background-color:#f6f7fa;color:var(--faint);box-shadow:none}
+.afilters select:focus-visible{outline:2px solid var(--t1);outline-offset:1px}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13.5px;color:var(--ink2);margin:2px 0 14px}
+.crumbs button{border:0;background:transparent;padding:3px 6px;border-radius:8px;cursor:pointer;color:var(--ink2);font-weight:500}
+.crumbs button:hover{background:#fff;color:var(--ink)}
+.crumbs b{color:var(--ink);font-weight:700;padding:3px 6px}
+.crumbs .sep{color:var(--faint)}
+.supval .v{font-size:58px}
+.abands{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:3px;margin-top:14px;background:var(--track)}
+.abands i{display:block;height:100%;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.alegend{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.alegend div{min-width:0;border-left:4px solid var(--bc);padding-left:9px}
+.alegend .n{font-size:12px;color:var(--ink2);line-height:1.25}
+.alegend b{display:block;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.alegend em{font-style:normal;font-size:12px;color:var(--faint)}
+.alist{display:grid;gap:2px;margin-top:6px}
+.arow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(90px,1fr) 76px 92px 86px;gap:12px;align-items:center;padding:9px 8px;border-radius:12px;
+  border:0;background:transparent;text-align:left;width:100%;font:inherit;color:inherit}
+button.arow{cursor:pointer}
+button.arow:hover{background:#f6f7fb}
+.arow.head{font-size:12px;font-weight:600;color:var(--ink2);padding-top:2px;padding-bottom:2px}
+.arow.head button{border:0;background:transparent;padding:4px 0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.arow.head button[aria-pressed="true"]{color:var(--ink)}
+.arow.head .r,.arow .r{text-align:right}
+.arow .t1{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .t2{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .trk{height:6px}
+.arow .sv{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;text-align:right}
+.arow .sv small{font-size:11.5px;font-weight:500;color:var(--ink2);margin-left:2px}
+.arow .m{font-variant-numeric:tabular-nums;text-align:right;font-size:14px}
+.arow .m.low{color:var(--serious-t);font-weight:600}
+.aside2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
+.agcard{background:linear-gradient(160deg,#fff 40%,#f2f8ec);border:1px dashed #cfe3c0}
+.agcard .tag{display:inline-block;font-size:11.5px;font-weight:600;color:#557a2c;background:#eef6e6;border-radius:999px;padding:2px 9px;margin-left:6px}
+.agrows{display:grid;gap:6px;margin-top:10px}
+.agrows div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;font-size:13px}
+.agrows span{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agrows b{font-weight:600;font-variant-numeric:tabular-nums}
+.fcard .fname{font-size:22px;font-weight:700;letter-spacing:-.3px;line-height:1.2;overflow-wrap:anywhere}
+.fcard .fplace{font-size:13.5px;color:var(--ink2);margin-top:4px}
+.areawait{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px 16px;color:var(--ink2)}
+.areawait .sp{width:20px;height:20px;border:2.5px solid var(--t1a);border-top-color:var(--t1);border-radius:50%;animation:aspin .8s linear infinite}
+@keyframes aspin{to{transform:rotate(360deg)}}
+@media (max-width:1080px){
+  .afilters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .afilters .reset{grid-column:1 / -1;justify-self:start}
+  .aside2{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:680px){
+  .alegend{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .arow{grid-template-columns:minmax(0,1fr) 56px 64px;gap:8px}
+  .arow .t2{white-space:normal}
+  .arow .hide-s{display:none}
+  .supval .v{font-size:48px}
+}
 @media (max-width:1180px){ .facts6{grid-template-columns:repeat(3,minmax(0,1fr))} }
 @media (max-width:1080px){
   .hero{grid-template-columns:minmax(0,1fr)}
@@ -494,6 +556,7 @@ table.st tr:last-child td{border-bottom:0}
   <nav class="pages" id="pageNav" role="tablist" aria-label="Pages" hidden>
     <button role="tab" data-page="overview" aria-selected="true">Overview</button>
     <button role="tab" data-page="bottom" aria-selected="false">Highest Average Outage</button>
+    <button role="tab" data-page="area" aria-selected="false">Supply by Area</button>
   </nav>
   <div class="state" id="state"></div>
   <div id="content" hidden></div>
@@ -749,7 +812,7 @@ var M = {discom:'Discom', total:'Total Feeders', n:'Feeders With Outage', pct:'F
 function ext(a, b){ var o = {}; for (var k in a) o[k] = a[k]; for (var j in b) o[j] = b[j]; return o; }
 
 var DATA = null, scope = STATE_NAME, firstDraw = true;
-var ui = {sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
+var ui = {area:{district:'', block:'', feeder:'', sort:'low', more:false}, sort:'avgMin', dir:'desc', circle:'', q:'', band:'', side:'Top', n:10, level:'Divisions', measure:'', over:12, overSort:'min', overQ:'',
           ag:10, agSort:'min', agQ:'', agWhich:'all', trend:'avgMin', page:'overview', bfilter:'all'};
 try { window.localStorage.removeItem('feeder-outage-page'); var bf = window.localStorage.getItem('feeder-outage-bfilter'); if (/^(all|circles|divisions|feeders)$/.test(bf || '')) ui.bfilter = bf; } catch (e) {}
 
@@ -942,7 +1005,7 @@ function load(fresh){
     showState('error');
   }).getDashboardData(fresh === true);
 }
-document.getElementById('refreshBtn').addEventListener('click', function(){ this.classList.toggle('spin'); load(true); });
+document.getElementById('refreshBtn').addEventListener('click', function(){ this.classList.toggle('spin'); load(true); if (AREA || ui.page === 'area') loadArea(true); });
 
 /* ---------- colour themes ---------- */
 function hex(h){ h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
@@ -1195,6 +1258,7 @@ function render(){
   });
   Array.prototype.forEach.call(document.querySelectorAll('#pageNav button'), function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-page') === ui.page)); });
   if (ui.page === 'bottom'){ renderBottom($c); grow(); firstDraw = false; return; }
+  if (ui.page === 'area'){ renderArea($c); grow(); firstDraw = false; return; }
 
   /* the meter and four figures */
   var hv = el('span', {class:'v'});
@@ -2064,6 +2128,315 @@ function bottomFeeders(nm){
     .sort(function(a, b){ return num(a.rank) - num(b.rank); });
 }
 function discomFor(r){ return DATA.divisions.filter(function(x){ return String(x.discom) === String(r.discom) && String(x.division) === String(r.division); })[0]; }
+/* ---------- Supply by Area ----------
+   Average supply per feeder = 24 hrs - average outage per feeder (per day). Counted feeders only: Agriculture feeders
+   (and Industrial feeders of SBPDCL, and 33 kV) are never in it, as on every other page; Agriculture is shown on its own.
+   The feeders of a division are its Total Feeders (as on the Overview), shared out over its districts and blocks in the
+   ratio of the feeders known there. So Bihar and each DISCOM give the same figures as the Overview. */
+var AREA = null, AREA_STATE = 'none', areaNo = 0;
+var NOT_TAGGED = 'Block not tagged';
+var SUPPLY_BANDS = [            // hours of supply in the day, for feeders; each with a written name
+  {min:24,  name:'Full 24 hrs',   colour:'var(--good)'},
+  {min:22,  name:'22 to 24 hrs',  colour:'#8fce9f'},
+  {min:20,  name:'20 to 22 hrs',  colour:'var(--warn)'},
+  {min:16,  name:'16 to 20 hrs',  colour:'var(--serious)'},
+  {min:-1,  name:'Under 16 hrs',  colour:'var(--crit)'}
+];
+function loadArea(fresh){
+  if (!(window.google && google.script && google.script.run && google.script.run.withSuccessHandler)) { AREA_STATE = 'error'; return; }
+  var my = ++areaNo;
+  if (!AREA) AREA_STATE = 'loading';
+  google.script.run.withSuccessHandler(function(p){
+    if (my !== areaNo) return;
+    var a = null;
+    try { a = buildArea(p); } catch (e) { note('area build failed', e); a = null; }
+    if (a) { AREA = a; AREA_STATE = 'ready'; } else if (!AREA) AREA_STATE = 'error';
+    if (ui.page === 'area' && DATA) render();
+  }).withFailureHandler(function(err){
+    if (my !== areaNo) return;
+    note('area load failed', err);
+    if (!AREA) AREA_STATE = 'error'; else toast('Could not load the latest figures. Please try again in a moment.');
+    if (ui.page === 'area' && DATA) render();
+  }).getAreaData(fresh === true);
+}
+function buildArea(p){
+  if (!p || !p.ok || !p.discoms) return null;
+  var feeders = [], agri = [], info = {};
+  (p.order || Object.keys(p.discoms)).forEach(function(dc){
+    var x = p.discoms[dc];
+    if (!x || x.error) return;
+    var days = Math.max(1, num(x.days)), reg = {}, tot = {}, divDist = {};
+    (x.divisions || []).forEach(function(r){ tot[r[1]] = num(r[2]); divDist[r[1]] = String(r[3] || ''); });
+    var one = function(r, isAgri){
+      return {discom:dc, circle:String(r[0]), division:String(r[1]), district:String(r[2] || divDist[r[1]] || 'District not known'),
+              block:String(r[3] || '') || NOT_TAGGED, ss:String(r[4]), name:String(r[5]), type:String(r[6]), id:String(r[7]),
+              ev:num(r[8]) / days, min:num(r[9]) / days, over:num(r[10]), w:1, agri:isAgri};
+    };
+    var list = (x.feeders || []).map(function(r){ return one(r, false); });
+    list.forEach(function(f){ reg[f.division] = (reg[f.division] || 0) + 1; });
+    list.forEach(function(f){ var t = tot[f.division]; if (t && reg[f.division]) f.w = t / reg[f.division]; });   // so each division adds up to its Total Feeders
+    Object.keys(tot).forEach(function(dv){           // a division with no feeder known yet: its feeders still count
+      if (!reg[dv] && tot[dv] > 0) list.push({discom:dc, circle:'', division:dv, district:divDist[dv] || 'District not known', block:NOT_TAGGED,
+        ss:'', name:'', type:'', id:'', ev:0, min:0, over:0, w:tot[dv], agri:false, orphan:true});
+    });
+    feeders = feeders.concat(list);
+    agri = agri.concat((x.agri || []).map(function(r){ return one(r, true); }));
+    info[dc] = {days:days, from:x.from, upto:x.upto};
+  });
+  if (!feeders.length) return {feeders:[], agri:[], info:info, empty:true};
+  return {feeders:feeders, agri:agri, info:info};
+}
+function areaSum(list){
+  var s = {w:0, n:0, ev:0, min:0, over4:0, ten:0, over24:0, longest:null, bands:[0,0,0,0,0], count:0};
+  list.forEach(function(f){
+    s.w += f.w; s.over24 += f.over;
+    if (f.orphan) return;
+    s.count++;
+    s.ev += f.ev; s.min += f.min;
+    if (f.ev > 0 || f.min > 0){
+      s.n++;
+      if (f.min > 240) s.over4++;
+      if (f.ev >= 10) s.ten++;
+      if (!s.longest || f.min > s.longest.min) s.longest = f;
+      var sup = 24 - f.min / 60;
+      for (var i = 1; i < SUPPLY_BANDS.length; i++) if (sup >= SUPPLY_BANDS[i].min || i === SUPPLY_BANDS.length - 1) { s.bands[i]++; break; }
+    }
+  });
+  s.bands[0] = Math.max(0, s.w - s.n);
+  s.avgMin = s.w ? s.min / s.w : 0;
+  s.supply = 24 - s.avgMin / 60;
+  s.avgEv = s.w ? s.ev / s.w : 0;
+  s.pct = s.w ? 100 * s.n / s.w : 0;
+  s.mpi = s.ev ? s.min / s.ev : 0;
+  return s;
+}
+function hrs(h){ return dec(h, 1); }
+function supplyDial(h){
+  // half-circle meter for hours of supply, 0 to 24
+  var W = 300, R = 116, cx = 150, cy = 138, sw = 20;
+  var f = Math.min(1, Math.max(0, h / 24)), len = Math.PI * R, gid = 'sg' + (++gradNo);
+  var svg = sv('svg', {viewBox:'0 0 ' + W + ' 156', role:'img', 'aria-label':'Average supply per feeder ' + hrs(h) + ' hours a day'});
+  var gr = sv('linearGradient', {id:gid, x1:'0', y1:'0', x2:'1', y2:'0'});
+  gr.appendChild(sv('stop', {offset:'0', style:'stop-color:var(--t1)'})); gr.appendChild(sv('stop', {offset:'1', style:'stop-color:var(--t2)'}));
+  svg.appendChild(sv('defs', null, [gr]));
+  var d = 'M' + (cx - R) + ' ' + cy + ' A' + R + ' ' + R + ' 0 0 1 ' + (cx + R) + ' ' + cy;
+  svg.appendChild(sv('path', {d:d, fill:'none', stroke:'var(--track)', 'stroke-width':sw, 'stroke-linecap':'round'}));
+  var off = (len * (1 - f)).toFixed(2);
+  var arc = sv('path', {class:'arcv', d:d, fill:'none', stroke:'url(#' + gid + ')', 'stroke-width':sw, 'stroke-linecap':'round', 'stroke-dasharray':len.toFixed(2), 'data-off':off});
+  arc.style.strokeDashoffset = still ? off : len.toFixed(2);
+  if (f > 0) svg.appendChild(arc);
+  [[0,'0'], [0.25,'6'], [0.5,'12'], [0.75,'18'], [1,'24 hrs']].forEach(function(t){
+    var a = Math.PI * (1 - t[0]), r1 = R - sw / 2 - 5, r2 = R - sw / 2 - 11, r3 = R - sw / 2 - 24, end = (t[0] === 0 || t[0] === 1);
+    if (!end) svg.appendChild(sv('line', {x1:cx + r1 * Math.cos(a), y1:cy - r1 * Math.sin(a), x2:cx + r2 * Math.cos(a), y2:cy - r2 * Math.sin(a), stroke:'var(--faint)', 'stroke-width':2, 'stroke-linecap':'round'}));
+    var tx = end ? sv('text', {x:cx + R * Math.cos(a), y:cy + sw / 2 + 14, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink2)', 'font-weight':500})
+                 : sv('text', {x:cx + r3 * Math.cos(a), y:cy - r3 * Math.sin(a) + 4, 'text-anchor':'middle', 'font-size':11, fill:'var(--ink2)', 'font-weight':500});
+    tx.textContent = t[1]; svg.appendChild(tx);
+  });
+  var deg = -90 + 180 * f;
+  var g = sv('g', {class:'needle', 'data-rot':deg.toFixed(1)});
+  g.style.transformOrigin = cx + 'px ' + cy + 'px';
+  g.style.transform = 'rotate(' + (still ? deg.toFixed(1) : -90) + 'deg)';
+  g.appendChild(sv('path', {d:'M' + (cx - 5) + ' ' + cy + ' L' + cx + ' ' + (cy - R + 42) + ' L' + (cx + 5) + ' ' + cy + ' Z', fill:'var(--ink)'}));
+  svg.appendChild(g);
+  svg.appendChild(sv('circle', {cx:cx, cy:cy, r:11, fill:'var(--ink)'}));
+  svg.appendChild(sv('circle', {cx:cx, cy:cy, r:4.5, fill:'#fff'}));
+  return svg;
+}
+function areaWait($c, text, retry){
+  var box = el('div', {class:'card'}, [el('div', {class:'areawait', role:'status'}, retry ? [icon('alert'), text] : [el('span', {class:'sp', 'aria-hidden':'true'}), text])]);
+  if (retry) box.appendChild(el('div', {style:'text-align:center;padding-bottom:12px'}, [el('button', {class:'btn go', text:'Try again', onclick:function(){ AREA_STATE = 'loading'; loadArea(true); render(); }})]));
+  $c.appendChild(box);
+}
+function sorted(arr){ return arr.slice().sort(function(a, b){ return a.localeCompare(b); }); }
+function uniq(list, f){ var o = {}; list.forEach(function(x){ o[f(x)] = 1; }); return Object.keys(o); }
+
+function renderArea($c){
+  $c.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Supply by Area'}),
+    el('span', {class:'chip'}, [icon('clock'), 'Average supply = 24 hrs less average outage'])]));
+  if (!AREA){
+    if (AREA_STATE === 'none') { AREA_STATE = 'loading'; loadArea(false); }
+    if (AREA_STATE === 'error') areaWait($c, 'Could not load the figures of this page.', true);
+    else areaWait($c, 'Loading the figures of every district and block ...');
+    return;
+  }
+  if (AREA.empty){
+    areaWait($c, 'No feeder figures yet. They come with the next report sent from the update page.', true);
+    return;
+  }
+  var A = ui.area, discom = scope === STATE_NAME ? '' : scope;
+  var all = AREA.feeders.filter(function(f){ return !discom || f.discom === discom; });
+  var agAll = AREA.agri.filter(function(f){ return !discom || f.discom === discom; });
+  // the lists of the dropdowns follow the choice above them
+  var districts = sorted(uniq(all, function(f){ return f.district; }));
+  if (A.district && districts.indexOf(A.district) < 0) { A.district = ''; A.block = ''; A.feeder = ''; }
+  var inD = A.district ? all.filter(function(f){ return f.district === A.district; }) : all;
+  var blocks = A.district ? sorted(uniq(inD, function(f){ return f.block; })) : [];
+  if (blocks.indexOf(NOT_TAGGED) > 0) { blocks.splice(blocks.indexOf(NOT_TAGGED), 1); blocks.push(NOT_TAGGED); }
+  if (A.block && blocks.indexOf(A.block) < 0) { A.block = ''; A.feeder = ''; }
+  var inB = A.block ? inD.filter(function(f){ return f.block === A.block; }) : inD;
+  var feeders = A.block ? inB.filter(function(f){ return !f.orphan; }).sort(function(a, b){ return a.name.localeCompare(b.name); }) : [];
+  var fsel = A.feeder ? feeders.filter(function(f){ return f.discom + '|' + f.id === A.feeder; })[0] : null;
+  if (A.feeder && !fsel) A.feeder = '';
+
+  function sel(label, value, opts, allText, on, off){
+    var s = el('select', {'aria-label':label, onchange:function(){ on(this.value); }}, [el('option', {value:'', text:allText})].concat(opts.map(function(o){
+      var v = typeof o === 'string' ? o : o.v, t = typeof o === 'string' ? o : o.t;
+      var op = el('option', {value:v, text:t}); if (v === value) op.selected = true; return op;
+    })));
+    if (off) s.disabled = true;
+    return el('label', null, [label, s]);
+  }
+  var ag = function(){ A.feeder = ''; render(); };
+  $c.appendChild(el('div', {class:'afilters'}, [
+    sel('DISCOM', discom, DATA.scopes.filter(function(s){ return s !== STATE_NAME; }), 'Bihar (both)', function(v){ scope = v || STATE_NAME; A.district = ''; A.block = ''; A.feeder = ''; render(); }),
+    sel('District', A.district, districts, 'All districts (' + districts.length + ')', function(v){ A.district = v; A.block = ''; A.feeder = ''; render(); }),
+    sel('Block', A.block, blocks, A.district ? 'All blocks (' + blocks.length + ')' : 'Choose a district first', function(v){ A.block = v; A.feeder = ''; render(); }, !A.district),
+    sel('Feeder', A.feeder, feeders.map(function(f){ return {v:f.discom + '|' + f.id, t:f.name + ' (' + f.ss + ')'}; }), A.block ? 'All feeders (' + feeders.length + ')' : 'Choose a block first',
+        function(v){ A.feeder = v; render(); }, !A.block),
+    el('button', {class:'btn reset', text:'Reset', onclick:function(){ scope = STATE_NAME; A.district = ''; A.block = ''; A.feeder = ''; render(); }})
+  ]));
+
+  // where we are, with each step clickable
+  var steps = [{t:'Bihar', go:function(){ scope = STATE_NAME; A.district = ''; A.block = ''; A.feeder = ''; }}];
+  if (discom) steps.push({t:discom, go:function(){ A.district = ''; A.block = ''; A.feeder = ''; }});
+  if (A.district) steps.push({t:A.district, go:function(){ A.block = ''; A.feeder = ''; }});
+  if (A.block) steps.push({t:A.block, go:function(){ A.feeder = ''; }});
+  if (fsel) steps.push({t:fsel.name});
+  var cr = el('nav', {class:'crumbs', 'aria-label':'Where you are'});
+  steps.forEach(function(s, i){
+    if (i) cr.appendChild(el('span', {class:'sep', text:'›', 'aria-hidden':'true'}));
+    cr.appendChild(i === steps.length - 1 ? el('b', {text:s.t}) : el('button', {text:s.t, onclick:function(){ s.go(); render(); }}));
+  });
+  var dayInfo = Object.keys(AREA.info).filter(function(d){ return !discom || d === discom; }).map(function(d){ return AREA.info[d]; });
+  var upto = dayInfo.map(function(x){ return x.upto; }).filter(Boolean);
+  var multi = dayInfo.some(function(x){ return x.days > 1; });
+  if (upto.length) cr.appendChild(el('span', {class:'chip', style:'margin-left:auto'}, [icon('cal'), 'Feeder figures as on ' + niceDate(upto[0]) + (upto.length > 1 && upto[1] !== upto[0] ? ' / ' + niceDate(upto[1]) : '')]));
+  $c.appendChild(cr);
+
+  if (fsel) { renderFeeder($c, fsel, multi); return; }
+
+  var S = areaSum(inB), perDay = multi ? ' a day' : '';
+  var b0 = band(S.avgMin);
+  var hv = el('span', {class:'v'}); hv.textContent = hrs(S.supply);
+  var dialCard = el('div', {class:'card dialcard'}, [
+    el('div', {class:'dialbox'}, [supplyDial(S.supply)]),
+    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hrs'})]), el('div', {class:'l', text:'Average supply per feeder' + perDay})]),
+    el('div', {class:'chiprow'}, [chip(b0), el('span', {class:'chip', text:'Outage ' + hhmm(S.avgMin) + ' hr:min'})])
+  ]);
+  function kpi(cls, ic, label, value, sub){
+    return el('div', {class:'kpi ' + cls}, [el('div', {class:'kh'}, [el('div', {class:'ico'}, [icon(ic)]), el('div', {class:'lab', text:label})]),
+      el('div', {class:'val', text:value}), el('div', {class:'sub', text:sub})]);
+  }
+  $c.appendChild(el('div', {class:'hero'}, [dialCard, el('div', {class:'kpis'}, [
+    kpi('k-fd', 'plug', 'Feeders with outage', int(S.n), dec(S.pct, 1) + '% of ' + int(S.w) + ' feeders'),
+    kpi('k-ev', 'zap', 'Interruptions per feeder' + perDay, dec(S.avgEv, 2), int(S.ev) + ' interruptions in all'),
+    kpi('k-ov', 'alert', 'Under 20 hrs of supply', int(S.over4), 'feeders with more than 4 hrs outage'),
+    kpi('k-mpi', 'hour', 'Minutes per interruption', dec(S.mpi, 0), S.longest ? 'Longest: ' + hhmm(S.longest.min) + ' hr:min, ' + S.longest.name : 'No outage')
+  ])]));
+  $c.appendChild(el('div', {class:'facts6'}, [
+    stat('grid', 'Feeders', int(S.w), S.count && S.count < Math.round(S.w) ? int(S.count) + ' known by name' : 'all known by name'),
+    stat('zap', 'Full 24 hrs supply', int(S.bands[0]), 'feeders with no outage'),
+    stat('repeat', '10 or more interruptions', int(S.ten), 'feeders'),
+    stat('clock', 'Outage in all', hhmm(S.min) + ' hr:min', 'counted feeders' + perDay),
+    stat('tower', A.block ? 'Substations' : (A.district ? 'Blocks' : 'Districts'), int(A.block ? uniq(inB.filter(function(f){ return !f.orphan; }), function(f){ return f.ss; }).length : (A.district ? blocks.length : districts.length)), discom || 'Bihar'),
+    stat('alert', 'Over 24 hrs, left out', int(S.over24), 'feeder lines not counted')
+  ]));
+
+  // how many feeders got how much supply
+  var bandsCard = el('div', {class:'card'}, [el('h3', {text:'How much supply the feeders got'}), el('div', {class:'sub3', text:'Feeders in each band of supply hours' + perDay})]);
+  var bw = el('div', {class:'abands'});
+  SUPPLY_BANDS.forEach(function(b, i){ if (S.bands[i] > 0) bw.appendChild(el('i', {style:'background:' + b.colour, title:b.name + ': ' + int(S.bands[i]), 'data-w':(100 * S.bands[i] / Math.max(1e-9, S.w)).toFixed(2) + '%'})); });
+  bandsCard.appendChild(bw);
+  bandsCard.appendChild(el('div', {class:'alegend'}, SUPPLY_BANDS.map(function(b, i){
+    return el('div', {style:'--bc:' + b.colour}, [el('div', {class:'n', text:b.name}), el('b', {text:int(S.bands[i])}), el('em', {text:dec(S.w ? 100 * S.bands[i] / S.w : 0, 1) + '%'})]);
+  })));
+
+  // Agriculture feeders: on their own, never in the figures above
+  var agIn = agAll.filter(function(f){ return (!A.district || f.district === A.district) && (!A.block || f.block === A.block); });
+  var agOut = agIn.filter(function(f){ return f.ev > 0 || f.min > 0; });
+  var agMin = agOut.reduce(function(t, f){ return t + f.min; }, 0), agEv = agOut.reduce(function(t, f){ return t + f.ev; }, 0);
+  var agCard = el('div', {class:'card agcard'}, [el('h3', null, ['Agriculture feeders', el('span', {class:'tag', text:'Kept separate, not counted'})]),
+    el('div', {class:'sub3', text:'Not in any figure on this page'}),
+    el('div', {class:'agrows'}, [
+      el('div', null, [el('span', {text:'Agriculture feeders known here'}), el('b', {text:int(agIn.length)})]),
+      el('div', null, [el('span', {text:'With outage'}), el('b', {text:int(agOut.length)})]),
+      el('div', null, [el('span', {text:'Interruptions' + perDay}), el('b', {text:int(agEv)})]),
+      el('div', null, [el('span', {text:'Average supply of those with outage'}), el('b', {text:agOut.length ? hrs(24 - agMin / agOut.length / 60) + ' hrs' : '-'})])
+    ])]);
+  if (A.block && agOut.length){
+    var top = agOut.slice().sort(function(a, b){ return b.min - a.min; }).slice(0, 5);
+    agCard.appendChild(el('div', {class:'agrows', style:'margin-top:12px;padding-top:10px;border-top:1px solid var(--line)'}, top.map(function(f){
+      return el('div', null, [el('span', {text:f.name}), el('b', {text:hrs(24 - f.min / 60) + ' hrs'})]);
+    })));
+  }
+  $c.appendChild(el('div', {class:'aside2'}, [bandsCard, agCard]));
+
+  // the next level down
+  var level = A.block ? 'feeder' : (A.district ? 'block' : 'district');
+  var title = {feeder:'Feeders of ' + A.block, block:'Blocks of ' + A.district, district:'Districts' + (discom ? ' of ' + discom : ' of Bihar')}[level];
+  var groups = [];
+  if (level === 'feeder') groups = feeders.map(function(f){ return {name:f.name, sub:f.ss + ' · ' + f.type, s:areaSum([f]), go:f.discom + '|' + f.id, discom:f.discom}; });
+  else {
+    var by = {};
+    inB.forEach(function(f){ var k = level === 'block' ? f.block : f.district; (by[k] = by[k] || []).push(f); });
+    groups = Object.keys(by).map(function(k){
+      var L = by[k], dcs = uniq(L, function(f){ return f.discom; });
+      var nb = uniq(L, function(f){ return f.block; }).length;
+      var sub = level === 'district' ? dcs.join(' and ') + ' · ' + nb + (nb === 1 ? ' block' : ' blocks')
+                                     : (function(n){ return n + (n === 1 ? ' substation' : ' substations'); })(uniq(L.filter(function(f){ return !f.orphan; }), function(f){ return f.ss; }).length);
+      return {name:k, sub:sub, s:areaSum(L), go:k, discom:dcs.length === 1 ? dcs[0] : ''};
+    });
+  }
+  var sorts = {low:function(a, b){ return a.s.supply - b.s.supply; }, ev:function(a, b){ return b.s.avgEv - a.s.avgEv; },
+               size:function(a, b){ return b.s.w - a.s.w; }, name:function(a, b){ return a.name.localeCompare(b.name); }};
+  groups.sort(sorts[A.sort] || sorts.low);
+  var listCard = el('div', {class:'card', style:'margin-top:16px'});
+  listCard.appendChild(el('div', {class:'sechead', style:'margin-bottom:4px'}, [el('h3', {text:title}), el('span', {class:'count', text:int(groups.length)}),
+    el('span', {style:'flex:1'}), pills([{v:'low', t:'Least supply'}, {v:'ev', t:'Most interruptions'}, {v:'size', t:'Most feeders'}, {v:'name', t:'A to Z'}], A.sort || 'low',
+      function(v){ A.sort = v; render(); }, 'Order')]));
+  var head = el('div', {class:'arow head', 'aria-hidden':'true'}, [el('span', {text:level === 'feeder' ? 'Feeder' : (level === 'block' ? 'Block' : 'District')}),
+    el('span', {class:'hide-s', text:'Average supply'}), el('span', {class:'r', text:'hrs'}), el('span', {class:'r hide-s', text:'Interruptions'}), el('span', {class:'r', text:'Under 20 hrs'})]);
+  var lst = el('div', {class:'alist'}, [head]);
+  var showN = A.more ? groups.length : Math.min(groups.length, 40);
+  groups.slice(0, showN).forEach(function(g){
+    var s = g.s, low = s.supply < 20;
+    var colour = s.avgMin <= 30 ? 'var(--good)' : s.avgMin <= 60 ? 'var(--warn)' : s.avgMin <= 120 ? 'var(--serious)' : 'var(--crit)';
+    var row = el('button', {class:'arow', 'aria-label':g.name + ', average supply ' + hrs(s.supply) + ' hours', onclick:function(){
+        if (level === 'district') { A.district = g.go; A.block = ''; } else if (level === 'block') A.block = g.go; else A.feeder = g.go;
+        A.more = false; render(); window.scrollTo({top:0, behavior:'smooth'}); }}, [
+      el('span', {style:'min-width:0'}, [el('div', {class:'t1', text:g.name}), el('div', {class:'t2', text:(level === 'feeder' ? g.sub : int(s.w) + ' feeders · ' + g.sub)})]),
+      bar(100 * s.supply / 24, colour, 'hide-s'),
+      el('span', {class:'sv'}, [hrs(s.supply)]),
+      el('span', {class:'m hide-s', text:level === 'feeder' ? int(s.ev) : dec(s.avgEv, 2)}),
+      el('span', {class:'m' + (s.over4 ? ' low' : ''), text:level === 'feeder' ? (low ? 'Yes' : 'No') : int(s.over4)})
+    ]);
+    lst.appendChild(row);
+  });
+  listCard.appendChild(lst);
+  if (groups.length > showN) listCard.appendChild(el('div', {class:'more'}, [el('button', {class:'btn', text:'Show all ' + int(groups.length), onclick:function(){ A.more = true; render(); }})]));
+  if (!groups.length) listCard.appendChild(el('div', {class:'empty', text:'Nothing to show here.'}));
+  $c.appendChild(listCard);
+}
+function renderFeeder($c, f, multi){
+  var s = areaSum([f]), sup = s.supply, perDay = multi ? ' a day' : '';
+  var card = el('div', {class:'card fcard'}, [
+    el('div', {class:'chiprow', style:'justify-content:flex-start;margin:0 0 8px'}, [dChip(f.discom), el('span', {class:'chip', text:f.type || 'Type not given'})]),
+    el('div', {class:'fname', text:f.name}),
+    el('div', {class:'fplace', text:'Substation ' + f.ss + ' · ' + f.block + ' · ' + f.district + ' · ' + f.division + ' division · ' + f.circle + ' circle'})
+  ]);
+  var hv = el('span', {class:'v'}); hv.textContent = hrs(sup);
+  var dialCard = el('div', {class:'card dialcard'}, [el('div', {class:'dialbox'}, [supplyDial(sup)]),
+    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hrs'})]), el('div', {class:'l', text:'Supply' + perDay})]),
+    el('div', {class:'chiprow'}, [chip(band(f.min))])]);
+  $c.appendChild(el('div', {class:'hero'}, [dialCard, el('div', null, [card, el('div', {class:'stats2'}, [
+    stat('clock', 'Outage' + perDay, hhmm(f.min) + ' hr:min', f.min > 240 ? 'More than 4 hrs' : (f.min > 0 ? 'Up to 4 hrs' : 'No outage')),
+    stat('zap', 'Interruptions' + perDay, dec(f.ev, f.ev % 1 ? 1 : 0), f.ev >= 10 ? '10 or more' : ''),
+    stat('hour', 'Minutes per interruption', f.ev ? dec(f.min / f.ev, 0) : '-', ''),
+    stat('meter', 'Meter / feeder code', f.id || '-', f.over ? 'Over 24 hrs on ' + int(f.over) + ' day(s): left out' : '')
+  ])])]));
+  $c.appendChild(el('div', {class:'more'}, [el('button', {class:'btn', text:'Back to all feeders of ' + f.block, onclick:function(){ ui.area.feeder = ''; render(); }})]));
+}
+
 function renderBottom($c){
   var list = scope === STATE_NAME ? discomsHere() : [scope];
   $c.appendChild(el('div', {class:'sechead'}, [el('h2', {text:'Highest Average Outage'}),

@@ -588,16 +588,31 @@ function sendParts(){
   if (LAST.typesNote) msg("sendMsgs", "warn", "Sent with the starting list of 8 Agriculture feeders, because the shared list could not be read.");
   if (!r.parts.length) { msg("sendMsgs", "warn", "Nothing to send: no DISCOM file was read."); return Promise.resolve(); }
   var chain = Promise.resolve(), fails = 0;
+  LAST.feedFail = false;
   r.parts.forEach(function(p){
     if (LAST.sent[p[0]]) { msg("sendMsgs", "info", p[0] + " was already sent."); return; }     // "send again" sends only what failed
     chain = chain.then(function(){ return sendOne(p[0], function(pw){ return ask("body", {name:p[1], password:pw}).then(function(m){ return m.result; }); }, "sendMsgs"); })
-                 .then(function(ok){ if (ok) LAST.sent[p[0]] = true; else fails++; });
+                 .then(function(ok){ if (ok) LAST.sent[p[0]] = true; else fails++; return ok ? sendFeeders(p[0]) : null; });
   });
   return chain.then(function(){
     $("bar").hidden = true; $("status").textContent = fails ? "Not everything was sent. See the messages above." : "Dashboard updated.";
-    $("sendAgainBox").hidden = !fails;
+    $("sendAgainBox").hidden = !(fails || LAST.feedFail);
     if (!fails) msg("sendMsgs", "info", "Open the dashboard with the button at the top to see the new figures.");
     fillLog();
+  });
+}
+
+/* the figures of every feeder, for the Supply by Area page (same password, kept only in memory) */
+function sendFeeders(discom){
+  var rows = LAST && LAST.result && LAST.result.feeders && LAST.result.feeders[discom];
+  if (!rows || !rows.length || !PW[discom]) return Promise.resolve();
+  $("status").textContent = "Sending the " + discom + " feeder figures for Supply by Area ...";
+  return post(JSON.stringify({action:"feeders", discom:discom, password:PW[discom], rows:rows})).then(function(ans){
+    if (!ans.ok) { LAST.feedFail = true; LAST.sent[discom] = false; }
+    msg("sendMsgs", ans.ok ? "ok" : "warn", ans.ok ? ans.message : discom + ": the feeder figures for Supply by Area were not kept. " + (ans.message || "") + " The other pages were updated.");
+  }).catch(function(e){
+    msg("sendMsgs", "warn", discom + ": the feeder figures for Supply by Area could not be sent (" + e.message + "). The other pages were updated. Press 'Send to the dashboard again' later.");
+    LAST.sent[discom] = false; LAST.feedFail = true;
   });
 }
 

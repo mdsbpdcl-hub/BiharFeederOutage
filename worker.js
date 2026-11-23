@@ -22,6 +22,16 @@ if "ssl" not in sys.modules:
     _s = types.ModuleType("ssl"); _s.SSLError = type("SSLError", (OSError,), {}); sys.modules["ssl"] = _s
 sys.path.insert(0, "/app")
 import outage_report_app as app
+
+# Supply by Area needs the figures of every feeder. The program already works them out; this keeps a copy of
+# its feeder lines just before its own sums are made (the program file itself is not changed).
+_build_tables = app.build_tables
+def _keep_feeder_rows(store, *args, **kw):
+    app._FEEDER_ROWS = store.db.execute(
+        "SELECT discom, d, circle, division, sscode, ssname, fname, ftype, msn, fcode, ev, secs, cat, over24"
+        " FROM f WHERE cat <> 'V33'").fetchall()
+    return _build_tables(store, *args, **kw)
+app.build_tables = _keep_feeder_rows
 `);
   app = py.globals.get("app");
   return app;
@@ -100,6 +110,11 @@ else:
             "head": [c[0] for c in _t.cols], "summary": _t.rows,
             "agri_like": _info.get("agri_like", []), "days": _info["days"],
             "date": app.fmt_date(_info["d_max"])}
+    _f = {}
+    for _r in getattr(app, "_FEEDER_ROWS", []) or []:
+        _f.setdefault(_r[0], []).append(list(_r[1:]))
+    _out["feeders"] = _f
+    app._FEEDER_ROWS = None
 json.dumps(_out, default=str)`);
       const out = JSON.parse(res);
       if (out.ok) out.blobs = out.files.map(n => ({ name: n, bytes: py.FS.readFile("/out/" + n) }));

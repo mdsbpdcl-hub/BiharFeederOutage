@@ -4,7 +4,7 @@ Outage Dashboard Updation: the Bihar 11 kV feeder outage dashboard, and a page t
 
 | Page | Link | What it does |
 |---|---|---|
-| Dashboard | https://mdsbpdcl-hub.github.io/BiharFeederOutage/ | Overview and Highest Average Outage, with PDFs and call buttons. Anyone with the link can see it. |
+| Dashboard | https://mdsbpdcl-hub.github.io/BiharFeederOutage/ | Overview, Highest Average Outage, and Supply by Area (DISCOM > District > Block > Feeder). Anyone with the link can see it. |
 | Update page | https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html | Choose the company CSV files, make the Excel reports, send them to the dashboard. Needs the upload password. |
 | Agriculture list | https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html#list | The shared list of feeders that the companies type wrongly. Needs the upload password to change. |
 
@@ -13,6 +13,7 @@ Outage Dashboard Updation: the Bihar 11 kV feeder outage dashboard, and a page t
 - The update page runs **the same program as the Windows app** (`py/outage_report_app.py`) inside the browser, so the figures and the Excel files are exactly the same. The CSV files never leave the computer; only the finished report is sent.
 - The figures stay in the outage Google Sheet. The Apps Script web app (link in `config.js`) checks the password, reads the whole report before writing anything, and locks after 5 wrong passwords.
 - The password is asked on the page and kept only while the page is open. It is never saved.
+- Supply by Area: after each report the update page also sends the figures of every feeder (taken from the same program run; the program file is not changed). District and Block of each substation come from the Places tab of the Google Sheet.
 - The Agriculture list is kept in the tab "Agriculture List" of the outage Google Sheet. The update page and the Windows app (version 1.7) both read it before every report.
 
 ## Files
