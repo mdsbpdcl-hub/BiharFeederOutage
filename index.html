@@ -1893,6 +1893,13 @@ function madeOn(){
   var d = new Date(), mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return d.getDate() + ' ' + mo[d.getMonth()] + ' ' + d.getFullYear() + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
 }
+function fit(d, text, maxW, size, min){   // sets a font size at which the text fits maxW; cuts it with ... only if even the smallest size is too wide
+  text = String(text); var fs = size; d.setFontSize(fs);
+  while (d.getTextWidth(text) > maxW && fs > (min || 6)){ fs = Math.max(min || 6, fs - 0.25); d.setFontSize(fs); }
+  if (d.getTextWidth(text) <= maxW) return text;
+  while (text.length > 1 && d.getTextWidth(text + '...') > maxW) text = text.slice(0, -1);
+  return text + '...';
+}
 function fill(doc, h){ var c = hex(h); doc.setFillColor(c[0], c[1], c[2]); }
 function ink(doc, h){ var c = hex(h); doc.setTextColor(c[0], c[1], c[2]); }
 function stroke(doc, h){ var c = hex(h); doc.setDrawColor(c[0], c[1], c[2]); }
@@ -1905,10 +1912,10 @@ function newPdf(title, sub, wide){
   var bx = PM, by = 22, bw = PW - 2 * PM, bh = 58;
   fill(doc, RV.band); stroke(doc, RV.bandLine); doc.setLineWidth(1.3); doc.rect(bx, by, bw, bh, 'FD');
   fill(doc, RV.gold); doc.rect(bx, by + bh + 1, bw, 2.2, 'F');
-  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(9); doc.text('Bihar 11 kV Feeder Outage', bx + 12, by + 15);
-  ink(doc, RV.title); doc.setFont(PDF_FONT, 'bold'); doc.setFontSize(17); doc.text(title, bx + 12, by + 34);
-  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(10); doc.text(sub, bx + 12, by + 50);
-  doc.setFontSize(8.5); doc.text('Made on ' + madeOn(), bx + bw - 12, by + 15, {align:'right'});
+  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(8.5); doc.text('Bihar 11 kV Feeder Outage', bx + 12, by + 15);
+  doc.text('Made on ' + madeOn(), bx + bw - 12, by + 15, {align:'right'});
+  ink(doc, RV.title); doc.setFont(PDF_FONT, 'bold'); doc.text(fit(doc, title, bw - 24, 15, 10), bx + 12, by + 34);
+  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.text(fit(doc, sub, bw - 24, 9.5, 6.5), bx + 12, by + 50);
   P.y = 112;
   return P;
 }
@@ -1921,7 +1928,7 @@ function drawHeading(P){
   var d = P.doc;                     // pale blue box, light border on all sides, dark-blue bar on the left
   fill(d, RV.band); stroke(d, RV.bandLine); d.setLineWidth(1.3); d.rect(PM, P.y - 13, PW - 2 * PM, 20, 'FD');
   fill(d, h.colour || RV.bar); d.rect(PM, P.y - 13, 5, 20, 'F');
-  ink(d, RV.title); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12); d.text(h.text, PM + 12, P.y + 1.5);
+  ink(d, RV.title); d.setFont(PDF_FONT, 'bold'); d.text(fit(d, h.text, PW - 2 * PM - 20, 11, 7.5), PM + 12, P.y + 1.5);
   P.y += 18;
 }
 function para(P, text){
@@ -1990,7 +1997,7 @@ function finish(P, name){
   for (var i = 1; i <= n; i++){
     d.setPage(i); stroke(d, '#c9ced6'); d.setLineWidth(0.5); d.line(PM, PH - 32, PW - PM, PH - 32);
     ink(d, MUTED); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8);
-    d.text(P.title + '  |  ' + P.sub, PM, PH - 20); d.text('Page ' + i + ' of ' + n, PW - PM, PH - 20, {align:'right'});
+    d.text('Page ' + i + ' of ' + n, PW - PM, PH - 20, {align:'right'}); d.text(fit(d, P.title + '  |  ' + P.sub, PW - 2 * PM - 70, 8, 6), PM, PH - 20); d.setFontSize(8);
   }
   var url = null;
   try { url = URL.createObjectURL(d.output('blob')); } catch (e) {}
@@ -2019,15 +2026,16 @@ function pdfDaily(){
     var x = PM + i * (cw + gap), y = P.y - 10, nm = String(S.discom), col = DISCOM_HEX[nm] || P.t1, b = band(num(S.avgMin));
     fill(d, '#ffffff'); stroke(d, RV.grey); d.setLineWidth(1); d.rect(x, y, cw, ch, 'FD');
     fill(d, col); d.rect(x, y, cw, 3.5, 'F');
-    ink(d, INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(11); d.text(nm === STATE_NAME ? 'Bihar' : nm, x + 14, y + 18);
-    d.setFontSize(23); d.text(hhmm(S.avgMin), x + 14, y + 45);
-    d.setFont(PDF_FONT, 'normal'); d.setFontSize(8); ink(d, MUTED); d.text('hr:min, average outage per feeder' + (num(S.days) > 1 ? ' per day' : ''), x + 14, y + 57);
-    var sc = STATUS_COL[b.name]; fill(d, sc[1]); var tw = d.getTextWidth(b.name + '  ' + b.label) + 14;
-    d.roundedRect(x + cw - tw - 10, y + 9, tw, 14, 7, 7, 'F'); ink(d, sc[0]); d.setFont(PDF_FONT, 'bold'); d.setFontSize(7.5); d.text(b.name + '  ' + b.label, x + cw - tw / 2 - 10, y + 18.6, {align:'center'});
-    ink(d, INK); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8.5);
-    d.text(dec(S.avgEv, 2) + ' interruptions per feeder', x + 14, y + 72);
-    d.text(int(S.n) + ' of ' + int(S.total) + ' feeders had an outage', x + 14, y + 84);
-    d.text(int(S.over) + ' feeders over 4 hours; longest ' + String(S.maxDur), x + 14, y + 96);
+    var inner = cw - 24, sc = STATUS_COL[b.name];
+    d.setFont(PDF_FONT, 'bold'); var chipT = fit(d, b.name + '  ' + b.label, inner * 0.55 - 14, 7.5, 5.5), chipFs = d.getFontSize(), tw = d.getTextWidth(chipT) + 14;
+    fill(d, sc[1]); d.roundedRect(x + cw - tw - 10, y + 9, tw, 14, 7, 7, 'F'); ink(d, sc[0]); d.setFontSize(chipFs); d.text(chipT, x + cw - tw / 2 - 10, y + 18.6, {align:'center'});
+    ink(d, INK); d.setFont(PDF_FONT, 'bold'); d.text(fit(d, nm === STATE_NAME ? 'Bihar' : nm, inner - tw - 6, 10.5, 7), x + 12, y + 19);
+    d.text(fit(d, hhmm(S.avgMin), inner, 17, 10), x + 12, y + 43);
+    d.setFont(PDF_FONT, 'normal'); ink(d, MUTED); d.text(fit(d, 'hr:min, average outage per feeder' + (num(S.days) > 1 ? ' per day' : ''), inner, 8, 5.5), x + 12, y + 56);
+    ink(d, INK);
+    d.text(fit(d, dec(S.avgEv, 2) + ' interruptions per feeder', inner, 8.5, 5.5), x + 12, y + 71);
+    d.text(fit(d, int(S.n) + ' of ' + int(S.total) + ' feeders had an outage', inner, 8.5, 5.5), x + 12, y + 83);
+    d.text(fit(d, int(S.over) + ' feeders over 4 hours; longest ' + String(S.maxDur), inner, 8.5, 5.5), x + 12, y + 95);
   });
   P.y += ch + 12;
   heading(P, 'At a glance');
@@ -2119,9 +2127,9 @@ function pdfAverage(){
   discomsHere().forEach(function(nm, k){
     if (k > 0){ P.doc.addPage(); P.y = 56; }
     var col = DISCOM_HEX[nm], S = sumOf(nm);
-    var d0 = P.doc; ink(d0, col); d0.setFont(PDF_FONT, 'bold'); d0.setFontSize(16); need(P, 70); d0.text(nm, PM, P.y + 4);
-    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal'); d0.setFontSize(9.5);
-    d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder' + (num(S.days) > 1 ? ' per day' : '') + ', ' + int(S.over) + ' feeders over 4 hours, ' + int(S.total) + ' feeders', PM, P.y + 19);
+    var d0 = P.doc; ink(d0, col); d0.setFont(PDF_FONT, 'bold'); need(P, 70); d0.text(fit(d0, nm, PW - 2 * PM, 13, 9), PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal');
+    d0.text(fit(d0, hhmm(S.avgMin) + ' hr:min average outage per feeder' + (num(S.days) > 1 ? ' per day' : '') + ', ' + int(S.over) + ' feeders over 4 hours, ' + int(S.total) + ' feeders', PW - 2 * PM, 9, 6), PM, P.y + 19);
     P.y += 40;
     var allDiv = DATA.divisions.filter(function(r){ return String(r.discom) === nm; });
     var circ = DATA.circles.filter(function(r){ return String(r.discom) === nm; })
@@ -2719,9 +2727,9 @@ function pdfBottom(){
   discomsHere().forEach(function(nm, k){
     if (k > 0){ P.doc.addPage(); P.y = 56; }
     var col = DISCOM_HEX[nm], S = sumOf(nm), d0 = P.doc;
-    need(P, 70); ink(d0, col); d0.setFont(PDF_FONT, 'bold'); d0.setFontSize(16); d0.text(nm, PM, P.y + 4);
-    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal'); d0.setFontSize(9.5);
-    d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder, ' + int(S.total) + ' feeders', PM, P.y + 19); P.y += 40;
+    need(P, 70); ink(d0, col); d0.setFont(PDF_FONT, 'bold'); d0.text(fit(d0, nm, PW - 2 * PM, 13, 9), PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal');
+    d0.text(fit(d0, hhmm(S.avgMin) + ' hr:min average outage per feeder, ' + int(S.total) + ' feeders', PW - 2 * PM, 9, 6), PM, P.y + 19); P.y += 40;
     heading(P, 'Bottom 5 circles', col);
     table(P, ['Rank', 'Circle', 'Total feeders', 'Interruptions per feeder', 'Over 4 hrs', 'Average outage (hr:min)', 'Status', 'ESE Supply'],
       bottomCircles(nm).map(function(r, i){ return [String(i + 1), cell(String(r.circle), null, {bold:true}), int(r.total), dec(r.avgEv, 2), int(r.over),
@@ -2803,8 +2811,8 @@ function areaFigures(P, s, perDay){
     var x = PM + i * (w + gap);
     fill(d, '#ffffff'); stroke(d, RV.grey); d.setLineWidth(1); d.rect(x, y, w, h, 'FD');
     fill(d, RV.tops[i % RV.tops.length]); d.rect(x, y, w, 3.5, 'F');
-    ink(d, '#475467'); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8); d.text(d.splitTextToSize(t[0], w - 10)[0], x + 6, y + 15);
-    ink(d, t[2] ? t[2][0] : INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12.5); d.text(String(t[1]), x + 6, y + 33);
+    ink(d, '#475467'); d.setFont(PDF_FONT, 'normal'); d.text(fit(d, t[0], w - 12, 7.5, 5.5), x + 6, y + 15);
+    ink(d, t[2] ? t[2][0] : INK); d.setFont(PDF_FONT, 'bold'); d.text(fit(d, String(t[1]), w - 12, 11, 6.5), x + 6, y + 33);
   });
   P.y = y + h + 18;
 }
