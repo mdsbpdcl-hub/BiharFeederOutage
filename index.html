@@ -1863,8 +1863,10 @@ function renderAgri(sec){
 /* ---------- PDF reports (made in the browser; nothing is stored anywhere) ---------- */
 var PDF_LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'];
-var PW = 595.28, PH = 841.89, PM = 36, PDF_FONT = 'helvetica';
-var INK = '#1d2433', MUTED = '#667085', LINE = '#e7eaf0';
+var PW = 595.28, PH = 841.89, PM = 36, PDF_FONT = 'times';
+var INK = '#1d2433', MUTED = '#667085', LINE = '#5f666e';
+var RV = {band:'#EAF1FB', bandLine:'#8FAEDD', gold:'#C9A227', title:'#16294d', bar:'#1F4E9A', head:'#DCE8F7', alt:[246, 248, 251], outer:'#333333', grey:'#5f666e',
+          tops:['#2f6db5', '#2e8b57', '#c0392b', '#C9A227', '#7a65c2', '#0f9f8f']};
 var STATUS_COL = {Good:['#1a8a4c', '#eaf8f0'], Watch:['#9a6400', '#fff7e4'], High:['#b8352b', '#fff0ee'], 'Very high':['#86211b', '#fbe7e5'], 'No data':['#6b7385', '#f4f5f8']};
 var DISCOM_HEX = {SBPDCL:'#2a78d6', NBPDCL:'#eb6834', BIHAR:'#475467'};
 var $toast = document.getElementById('toast'), toastTimer = null, libsReady = null;
@@ -1899,11 +1901,15 @@ function newPdf(title, sub, wide){
   PW = doc.internal.pageSize.getWidth(); PH = doc.internal.pageSize.getHeight();
   var P = {doc:doc, y:0, t1:cssVar('--t1') || '#f0752f', t2:cssVar('--t2') || '#f7a531', title:title, sub:sub};
   doc.setProperties({title:title + ' - ' + sub});
-  for (var i = 0; i < 48; i++){ fill(doc, mix(P.t1, P.t2, i / 47)); doc.rect(i * PW / 48, 0, PW / 48 + 0.8, 72, 'F'); }
-  doc.setTextColor(255, 255, 255); doc.setFont(PDF_FONT, 'bold'); doc.setFontSize(18); doc.text(title, PM, 33);
-  doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(10.5); doc.text(sub, PM, 52);
-  doc.setFontSize(8.5); doc.text('Bihar 11 kV Feeder Outage', PW - PM, 33, {align:'right'}); doc.text('Made on ' + madeOn(), PW - PM, 52, {align:'right'});
-  P.y = 96;
+  // title band (review report style): light blue, light-blue border on all sides, gold line under it
+  var bx = PM, by = 22, bw = PW - 2 * PM, bh = 58;
+  fill(doc, RV.band); stroke(doc, RV.bandLine); doc.setLineWidth(1.3); doc.rect(bx, by, bw, bh, 'FD');
+  fill(doc, RV.gold); doc.rect(bx, by + bh + 1, bw, 2.2, 'F');
+  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(9); doc.text('Bihar 11 kV Feeder Outage', bx + 12, by + 15);
+  ink(doc, RV.title); doc.setFont(PDF_FONT, 'bold'); doc.setFontSize(17); doc.text(title, bx + 12, by + 34);
+  ink(doc, '#2d3b55'); doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(10); doc.text(sub, bx + 12, by + 50);
+  doc.setFontSize(8.5); doc.text('Made on ' + madeOn(), bx + bw - 12, by + 15, {align:'right'});
+  P.y = 112;
   return P;
 }
 function need(P, h){ if (P.y + h > PH - 48){ P.doc.addPage(); P.y = 48; } }
@@ -1911,10 +1917,12 @@ function heading(P, text, colour){ drawHeading(P); P.pending = {text:text, colou
 function drawHeading(P){
   if (!P.pending) return;
   var h = P.pending; P.pending = null;
-  need(P, 60);
-  var d = P.doc; fill(d, h.colour || P.t1); d.roundedRect(PM, P.y - 11, 4, 15, 2, 2, 'F');
-  ink(d, INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12.5); d.text(h.text, PM + 11, P.y + 1);
-  P.y += 14;
+  need(P, 64);
+  var d = P.doc;                     // pale blue box, light border on all sides, dark-blue bar on the left
+  fill(d, RV.band); stroke(d, RV.bandLine); d.setLineWidth(1.3); d.rect(PM, P.y - 13, PW - 2 * PM, 20, 'FD');
+  fill(d, h.colour || RV.bar); d.rect(PM, P.y - 13, 5, 20, 'F');
+  ink(d, RV.title); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12); d.text(h.text, PM + 12, P.y + 1.5);
+  P.y += 18;
 }
 function para(P, text){
   drawHeading(P); need(P, 24); var d = P.doc; ink(d, MUTED); d.setFont(PDF_FONT, 'normal'); d.setFontSize(9);
@@ -1928,9 +1936,9 @@ function table(P, head, body, opt){
   function settings(d, startY){
     return {
       startY:startY, head:[head], body:body, theme:'grid', margin:{left:PM, right:PM, top:48, bottom:48}, rowPageBreak:'avoid',
-      styles:{font:PDF_FONT, fontSize:opt.size || 8.6, cellPadding:{top:opt.pad || (opt.tight ? 3 : 4), right:5, bottom:opt.bar !== undefined ? (opt.tight ? 6 : 7) : (opt.pad || (opt.tight ? 3 : 4)), left:5}, textColor:hex(INK), lineColor:hex(LINE), lineWidth:0.5, valign:'middle', overflow:'linebreak'},
-      headStyles:{fillColor:hex(mix(P.t1, INK, 0.12)), textColor:255, fontStyle:'bold', halign:'center', valign:'middle'},
-      alternateRowStyles:{fillColor:[248, 249, 252]},
+      styles:{font:PDF_FONT, fontSize:opt.size || 8.6, cellPadding:{top:opt.pad || (opt.tight ? 3 : 4), right:5, bottom:opt.bar !== undefined ? (opt.tight ? 6 : 7) : (opt.pad || (opt.tight ? 3 : 4)), left:5}, textColor:hex(INK), lineColor:hex(RV.grey), lineWidth:0.7, valign:'middle', overflow:'linebreak'},
+      headStyles:{fillColor:hex(RV.head), textColor:hex(INK), fontStyle:'bold', halign:'center', valign:'middle', lineColor:hex(RV.grey), lineWidth:0.7},
+      alternateRowStyles:{fillColor:RV.alt}, tableLineColor:hex(RV.outer), tableLineWidth:1.2,
       columnStyles:opt.cols || {},
       didParseCell:function(x){
         if (x.section !== 'body') return;
@@ -1980,7 +1988,7 @@ function table(P, head, body, opt){
 function finish(P, name){
   var d = P.doc, n = d.getNumberOfPages();
   for (var i = 1; i <= n; i++){
-    d.setPage(i); stroke(d, LINE); d.setLineWidth(0.5); d.line(PM, PH - 32, PW - PM, PH - 32);
+    d.setPage(i); stroke(d, '#c9ced6'); d.setLineWidth(0.5); d.line(PM, PH - 32, PW - PM, PH - 32);
     ink(d, MUTED); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8);
     d.text(P.title + '  |  ' + P.sub, PM, PH - 20); d.text('Page ' + i + ' of ' + n, PW - PM, PH - 20, {align:'right'});
   }
@@ -2009,14 +2017,14 @@ function pdfDaily(){
   var gap = 12, cw = (PW - 2 * PM - gap * (rows.length - 1)) / rows.length, ch = 104;
   rows.forEach(function(S, i){
     var x = PM + i * (cw + gap), y = P.y - 10, nm = String(S.discom), col = DISCOM_HEX[nm] || P.t1, b = band(num(S.avgMin));
-    fill(d, mix('#ffffff', col, 0.08)); stroke(d, mix('#ffffff', col, 0.35)); d.setLineWidth(0.8); d.roundedRect(x, y, cw, ch, 9, 9, 'FD');
-    fill(d, col); d.roundedRect(x, y, 5, ch, 2.5, 2.5, 'F');
-    ink(d, INK); d.setFont('helvetica', 'bold'); d.setFontSize(11); d.text(nm === STATE_NAME ? 'Bihar' : nm, x + 14, y + 18);
+    fill(d, '#ffffff'); stroke(d, RV.grey); d.setLineWidth(1); d.rect(x, y, cw, ch, 'FD');
+    fill(d, col); d.rect(x, y, cw, 3.5, 'F');
+    ink(d, INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(11); d.text(nm === STATE_NAME ? 'Bihar' : nm, x + 14, y + 18);
     d.setFontSize(23); d.text(hhmm(S.avgMin), x + 14, y + 45);
-    d.setFont('helvetica', 'normal'); d.setFontSize(8); ink(d, MUTED); d.text('hr:min, average outage per feeder' + (num(S.days) > 1 ? ' per day' : ''), x + 14, y + 57);
+    d.setFont(PDF_FONT, 'normal'); d.setFontSize(8); ink(d, MUTED); d.text('hr:min, average outage per feeder' + (num(S.days) > 1 ? ' per day' : ''), x + 14, y + 57);
     var sc = STATUS_COL[b.name]; fill(d, sc[1]); var tw = d.getTextWidth(b.name + '  ' + b.label) + 14;
-    d.roundedRect(x + cw - tw - 10, y + 9, tw, 14, 7, 7, 'F'); ink(d, sc[0]); d.setFont('helvetica', 'bold'); d.setFontSize(7.5); d.text(b.name + '  ' + b.label, x + cw - tw / 2 - 10, y + 18.6, {align:'center'});
-    ink(d, INK); d.setFont('helvetica', 'normal'); d.setFontSize(8.5);
+    d.roundedRect(x + cw - tw - 10, y + 9, tw, 14, 7, 7, 'F'); ink(d, sc[0]); d.setFont(PDF_FONT, 'bold'); d.setFontSize(7.5); d.text(b.name + '  ' + b.label, x + cw - tw / 2 - 10, y + 18.6, {align:'center'});
+    ink(d, INK); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8.5);
     d.text(dec(S.avgEv, 2) + ' interruptions per feeder', x + 14, y + 72);
     d.text(int(S.n) + ' of ' + int(S.total) + ' feeders had an outage', x + 14, y + 84);
     d.text(int(S.over) + ' feeders over 4 hours; longest ' + String(S.maxDur), x + 14, y + 96);
@@ -2042,9 +2050,9 @@ function pdfDaily(){
     var top = P.y + 6, hgt = 130, left = PM + 34, right = PW - PM, days = useful[0].slots;
     var mx = 0; useful.forEach(function(s){ s.slots.forEach(function(x){ if (x.r && num(x.r.avgMin) > mx) mx = num(x.r.avgMin); }); });
     mx = Math.max(60, Math.ceil(mx / 30) * 30);
-    d.setFontSize(7.5); d.setFont('helvetica', 'normal');
+    d.setFontSize(7.5); d.setFont(PDF_FONT, 'normal');
     [0, 0.5, 1].forEach(function(f){
-      var yy = top + hgt * (1 - f); stroke(d, LINE); d.setLineWidth(0.5); d.line(left, yy, right, yy); ink(d, MUTED); d.text(hhmm(mx * f), left - 6, yy + 2.5, {align:'right'});
+      var yy = top + hgt * (1 - f); stroke(d, '#e7eaf0'); d.setLineWidth(0.5); d.line(left, yy, right, yy); ink(d, MUTED); d.text(hhmm(mx * f), left - 6, yy + 2.5, {align:'right'});
     });
     var gw = (right - left) / days.length, bw = Math.min(16, (gw - 10) / useful.length);
     days.forEach(function(slot, k){
@@ -2111,8 +2119,8 @@ function pdfAverage(){
   discomsHere().forEach(function(nm, k){
     if (k > 0){ P.doc.addPage(); P.y = 56; }
     var col = DISCOM_HEX[nm], S = sumOf(nm);
-    var d0 = P.doc; ink(d0, col); d0.setFont('helvetica', 'bold'); d0.setFontSize(16); need(P, 70); d0.text(nm, PM, P.y + 4);
-    ink(d0, MUTED); d0.setFont('helvetica', 'normal'); d0.setFontSize(9.5);
+    var d0 = P.doc; ink(d0, col); d0.setFont(PDF_FONT, 'bold'); d0.setFontSize(16); need(P, 70); d0.text(nm, PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal'); d0.setFontSize(9.5);
     d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder' + (num(S.days) > 1 ? ' per day' : '') + ', ' + int(S.over) + ' feeders over 4 hours, ' + int(S.total) + ' feeders', PM, P.y + 19);
     P.y += 40;
     var allDiv = DATA.divisions.filter(function(r){ return String(r.discom) === nm; });
@@ -2711,8 +2719,8 @@ function pdfBottom(){
   discomsHere().forEach(function(nm, k){
     if (k > 0){ P.doc.addPage(); P.y = 56; }
     var col = DISCOM_HEX[nm], S = sumOf(nm), d0 = P.doc;
-    need(P, 70); ink(d0, col); d0.setFont('helvetica', 'bold'); d0.setFontSize(16); d0.text(nm, PM, P.y + 4);
-    ink(d0, MUTED); d0.setFont('helvetica', 'normal'); d0.setFontSize(9.5);
+    need(P, 70); ink(d0, col); d0.setFont(PDF_FONT, 'bold'); d0.setFontSize(16); d0.text(nm, PM, P.y + 4);
+    ink(d0, MUTED); d0.setFont(PDF_FONT, 'normal'); d0.setFontSize(9.5);
     d0.text(hhmm(S.avgMin) + ' hr:min average outage per feeder, ' + int(S.total) + ' feeders', PM, P.y + 19); P.y += 40;
     heading(P, 'Bottom 5 circles', col);
     table(P, ['Rank', 'Circle', 'Total feeders', 'Interruptions per feeder', 'Over 4 hrs', 'Average outage (hr:min)', 'Status', 'ESE Supply'],
@@ -2786,10 +2794,19 @@ var FEEDER_HEAD = ['No.', 'Feeder', 'Substation', 'Type', 'DISCOM', 'Interruptio
 var FEEDER_COLS = {0:{halign:'center', cellWidth:26}, 1:{halign:'left'}, 2:{halign:'left', cellWidth:92}, 3:{halign:'center', cellWidth:46}, 4:{halign:'center', cellWidth:50},
                    5:{halign:'center', cellWidth:64}, 6:{halign:'center', cellWidth:52}, 7:{halign:'center', cellWidth:52}, 8:{halign:'center', cellWidth:52}};
 function areaFigures(P, s, perDay){
-  var d = P.doc; ink(d, INK); d.setFont(PDF_FONT, 'normal'); d.setFontSize(10.5);
-  var t = 'Average supply ' + hrs(s.supply) + ' hr:min per feeder' + perDay + '   |   Average outage ' + hhmm(s.avgMin) + ' hr:min   |   Feeders ' + int(s.w) +
-          '   |   With outage ' + int(s.n) + ' (' + dec(s.pct, 1) + '%)   |   Interruptions per feeder ' + dec(s.avgEv, 2) + '   |   Under 20 hrs ' + int(s.over4);
-  var lines = d.splitTextToSize(t, PW - 2 * PM); d.text(lines, PM, P.y); P.y += 13 * lines.length + 10;
+  // six light tiles: label above, figure below
+  var d = P.doc, b = band(s.avgMin), sc = STATUS_COL[b.name] || STATUS_COL['No data'];
+  var tiles = [['Average supply' + perDay, hrs(s.supply) + ' hr:min', sc], ['Average outage' + perDay, hhmm(s.avgMin) + ' hr:min', null], ['Feeders', int(s.w), null],
+               ['With outage', int(s.n) + '  (' + dec(s.pct, 1) + '%)', null], ['Interruptions per feeder', dec(s.avgEv, 2), null], ['Under 20 hrs (feeders)', int(s.over4), null]];
+  var gap = 8, n = tiles.length, w = (PW - 2 * PM - gap * (n - 1)) / n, h = 44, y = P.y - 8;
+  tiles.forEach(function(t, i){
+    var x = PM + i * (w + gap);
+    fill(d, '#ffffff'); stroke(d, RV.grey); d.setLineWidth(1); d.rect(x, y, w, h, 'FD');
+    fill(d, RV.tops[i % RV.tops.length]); d.rect(x, y, w, 3.5, 'F');
+    ink(d, '#475467'); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8); d.text(d.splitTextToSize(t[0], w - 10)[0], x + 6, y + 15);
+    ink(d, t[2] ? t[2][0] : INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12.5); d.text(String(t[1]), x + 6, y + 33);
+  });
+  P.y = y + h + 18;
 }
 function pdfArea(mode){
   var A = ui.area, discom = scope === STATE_NAME ? '' : scope, all = areaList();
@@ -2846,10 +2863,8 @@ function runAreaPdf(mode){
   if (!AREA || AREA.empty){ toast('The figures are still loading. Try again in a moment.'); return; }
   toast('Making the PDF ...');
   pdfLibs().then(function(){
-    PDF_FONT = 'times';
     try { pdfArea(mode); }
     catch (err){ note('pdf failed', err); toast('Could not make the PDF. Please try again.'); }
-    finally { PDF_FONT = 'helvetica'; }
   }, function(err){ note('pdf tools did not load', err); toast('Could not make the PDF: check the internet connection and try again.'); });
 }
 
