@@ -625,6 +625,15 @@ table.st th{background:#f4f7f9}
 /* one soft, rounded font for the whole page */
 body{font-family:"Nunito","Segoe UI",system-ui,sans-serif}
 h1,h2,h3,.supval .v,.dialval .v,.kpi .val{font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:800;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.01em}
+
+/* light theme parts: a very light fill with dark writing of the same colour (orange for Bihar, green for North, purple for South) */
+.bolt{background:var(--tl);border:1px solid var(--t2)}
+.bolt svg path{fill:var(--td)}
+.btn.go,.call,.toast a{background:var(--tl);color:var(--td);border:1px solid var(--t2)}
+.btn.go svg{color:var(--td)}
+.seg button[aria-pressed="true"]{background:var(--tl);color:var(--td);box-shadow:inset 0 0 0 1px var(--t2)}
+.stat .ic,.pills button[aria-pressed="true"],.pdfmenu .pi,.stateico{background:var(--tl);color:var(--td)}
+.refresh svg,.pdfbtn svg{color:var(--td)}
 </style>
 </head>
 <body data-theme="sunrise">
@@ -1121,22 +1130,31 @@ function rgba(h, a){ var x = hex(h); return 'rgba(' + x.join(',') + ',' + a + ')
 (function(){
   var box = document.getElementById('themes'), saved = null, root = document.documentElement;
   try { saved = window.localStorage.getItem(THEME_KEY); } catch (e) {}
-  function apply(v){
-    var t = THEMES.filter(function(x){ return x.v === v; })[0] || THEMES[0];
+  function apply(v, own){
+    var t = own || THEMES.filter(function(x){ return x.v === v; })[0] || THEMES[0];
     document.body.setAttribute('data-theme', t.v);
     var set = function(k, val){ root.style.setProperty(k, val); };
+    set('--tl', t.l || mix('#ffffff', t.a, .12)); set('--td', t.d || mix(t.a, '#1d2433', .45));
     set('--t1', t.a); set('--t2', t.b); set('--t1a', rgba(t.a, .16)); set('--t2a', rgba(t.b, .14)); set('--t1s', rgba(t.a, .09));
     [mix('#ffffff', t.a, .42), mix('#ffffff', t.a, .62), mix('#ffffff', t.a, .82), t.a, mix(t.a, '#1d2433', .18), mix(t.a, '#1d2433', .34), mix(t.a, '#1d2433', .5)]
       .forEach(function(c, i){ set('--r' + (i + 1), c); });
     [mix('#ffffff', t.b, .45), mix('#ffffff', t.b, .72), t.b, mix(t.b, '#1d2433', .22), mix(t.b, '#1d2433', .42)]
       .forEach(function(c, i){ set('--q' + (i + 1), c); });
+    if (own) return;
     Array.prototype.forEach.call(box.children, function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === t.v)); });
     try { window.localStorage.setItem(THEME_KEY, t.v); } catch (e) {}
   }
+  // the colour of the page follows the choice of Bihar, SBPDCL or NBPDCL
+  var SCOPE_THEMES = {BIHAR:{v:'bihar', a:'#E8894A', b:'#F5B98C', l:'#FDEDE0', d:'#8A4513'},      // very light orange
+                      NBPDCL:{v:'north', a:'#5FAF7E', b:'#A8D8B9', l:'#E8F6EE', d:'#1F6B43'},     // very light green (North)
+                      SBPDCL:{v:'south', a:'#9A80D2', b:'#C9B9EC', l:'#F2EDFB', d:'#4F3A8C'}};    // very light purple (South)
+  var shown = '';
+  window.scopeTheme = function(sc){ var t = SCOPE_THEMES[sc] || SCOPE_THEMES.BIHAR; if (t.v === shown) return; shown = t.v; apply(t.v, t); };
   THEMES.forEach(function(t){
     box.appendChild(el('button', {'data-v':t.v, title:t.t, 'aria-label':t.t + ' theme', style:'background:linear-gradient(135deg,' + t.a + ',' + t.b + ')', onclick:function(){ apply(t.v); }}));
   });
   apply('grid');
+  window.scopeTheme('BIHAR');
 })();
 
 /* ---------- tooltip + motion ---------- */
@@ -1345,6 +1363,7 @@ function divWeek(r){ return week(DATA.hDivBy[divKey(r)] || [], uptoOf(r.discom))
 
 /* ---------- the page ---------- */
 function render(){
+  window.scopeTheme(scope);
   var d = DATA, S = d.summary.filter(function(r){ return String(r.discom) === scope; })[0];
   var $c = $content; $c.textContent = ''; $c.className = firstDraw ? 'intro' : '';
   var days = num(S.days), perDay = days > 1 ? ' per day' : '';
