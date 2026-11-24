@@ -45,7 +45,7 @@ from xml.sax.saxutils import escape as xml_escape
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzXRkOmfOwReMdvNAW8Baz2h4ppDr7sTP3mO8KvACq6tS7eeDEhXWPHgLqGMhNaWxoXw/exec"
 
 APP_TITLE = "Bihar 11 kV Feeder Outage Report"
-APP_VERSION = "1.7"
+APP_VERSION = "1.8"
 
 OVER_HOURS = 4                 # "more than 4 hrs" list (strictly more than)
 MANY_INTERRUPTIONS = 10        # a feeder with this many or more interruptions
@@ -867,6 +867,243 @@ def _no_heading_layout(rows):
     return None
 
 
+# A "day-wise tripping count" export (the NBPDCL monthly view): one line per feeder, and for each day of the month
+# a pair of columns, outage hours (HH:MM) and number of trippings, then a Total pair. The app turns such a file into
+# ordinary lines (one per feeder per day, with its date) in a temporary copy, and reads that copy like any other file.
+DAY_MATRIX_HEAD = ["Circle", "Division", "Substation", "Feeder", "Feeder Code", "Meter No", "Feeder Type", "Date",
+                   "Event Count", "Duration HH:MM:SS"]
+RE_MATRIX_RANGE = re.compile(r"(\d{1,2})\s+([A-Za-z]{3,9}),?\s+(\d{4})\s*-\s*(\d{1,2})\s+([A-Za-z]{3,9}),?\s+(\d{4})")
+
+
+def _matrix_key(cell):
+    return re.sub(r"[^a-z0-9]", "", str(cell or "").lower())
+
+
+def day_matrix_copy(path):
+    """If the file is a day-wise tripping count, writes the ordinary lines to a temporary CSV file and returns
+    (temporary path, note for the log). Returns None for every other file."""
+    try:
+        with open(path, "rb") as fb:
+            start = fb.read(8)
+        if start[:4] == b"PK\x03\x04" or start[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+            return None
+        src = LineSource(path)
+        try:
+            top = []
+            for line in src.lines():
+                top.append(line)
+                if len(top) >= 40:
+                    break
+        finally:
+            src.close()
+        rows = list(csv.reader(top))
+    except (OSError, csv.Error):
+        return None
+    head_i = None
+    for i, r in enumerate(rows):
+        if any(_matrix_key(c) == "daysofmonth" for c in r):
+            head_i = i
+            break
+    if head_i is None:
+        return None
+    pair_i = None
+    for i in range(head_i + 1, min(head_i + 4, len(rows))):
+        ks = [_matrix_key(c) for c in rows[i]]
+        if ks.count("hrs") >= 2 and ks.count("no") >= 2:
+            pair_i = i
+            break
+    if pair_i is None:
+        return None
+    head = rows[head_i]
+    first_day_col = min(j for j, c in enumerate(head) if _matrix_key(c) == "daysofmonth")
+    hk = [_matrix_key(c) for c in rows[pair_i]]
+    hrs_cols = [j for j, k in enumerate(hk) if k == "hrs"]
+    labels = {}
+    for i in range(head_i + 1, pair_i + 1):
+        for j, c in enumerate(rows[i]):
+            k = _matrix_key(c)
+            m = re.match(r"^day(\d{1,2})$", k)
+            if m:
+                labels[j] = int(m.group(1))
+            elif k == "total":
+                labels[j] = 0
+    # day of each pair: the "Day N" label at or just before its Hrs column; the last pair is the Total
+    pairs = []
+    for n, hc in enumerate(hrs_cols):
+        end = hrs_cols[n + 1] if n + 1 < len(hrs_cols) else hc + 3
+        lab = [labels[j] for j in sorted(labels) if hc - 2 <= j <= hc]
+        day = lab[-1] if lab else (n + 1)
+        pairs.append((day, hc, end))
+    # the text columns: headings before the day columns; the figures may sit a column away from their headings
+    want = {}
+    for j, c in enumerate(head[:first_day_col]):
+        k = _matrix_key(c)
+        if not k:
+            continue
+        if "circle" in k:
+            want["circle"] = j
+        elif "subdiv" in k:
+            continue
+        elif "division" in k:
+            want["division"] = j
+        elif "pss" in k or "substation" in k:
+            want["substation"] = j
+        elif "feeder" in k and ("code" in k or k.endswith("id")):
+            want["fcode"] = j
+        elif "feeder" in k:
+            want["feeder"] = j
+        elif "meter" in k or "msn" in k:
+            want["msn"] = j
+        elif "category" in k or "type" in k:
+            want["ftype"] = j
+        else:
+            want["_" + k] = j
+    if not all(f in want for f in ("circle", "division", "feeder")):
+        return None
+    month_from = month_to = None
+    for r in rows[:head_i]:
+        m = RE_MATRIX_RANGE.search(" ".join(r))
+        if m and m.group(2)[:3].lower() in MONTHS and m.group(5)[:3].lower() in MONTHS:
+            try:
+                month_from = datetime.date(int(m.group(3)), MONTHS[m.group(2)[:3].lower()], int(m.group(1)))
+                month_to = datetime.date(int(m.group(6)), MONTHS[m.group(5)[:3].lower()], int(m.group(4)))
+            except ValueError:
+                month_from = month_to = None
+            break
+
+    def day_date(day):
+        if not month_from:
+            return None
+        for y, mo in ((month_from.year, month_from.month), (month_to.year, month_to.month)):
+            try:
+                d = datetime.date(y, mo, day)
+            except ValueError:
+                continue
+            if month_from <= d <= month_to:
+                return d
+        return None
+
+    day_date.known = month_from is not None
+
+    def pair_values(r, hc, end):
+        hrs = cnt = None
+        for j in range(hc, min(end, len(r))):
+            v = r[j].strip()
+            if not v:
+                continue
+            if hrs is None and ":" in v:
+                hrs = v
+            elif cnt is None and re.match(r"^\d+(\.0+)?$", v):
+                cnt = v
+        return hrs, cnt
+
+    fd, out_path = tempfile.mkstemp(prefix="daywise_", suffix=".csv")
+    os.close(fd)
+    lines = feeders = off_total = out_range = 0
+    days_seen = set()
+    data_cols = None
+    src = LineSource(path)
+    try:
+        with open(out_path, "w", newline="", encoding="utf-8") as fo:
+            w = csv.writer(fo)
+            w.writerow(DAY_MATRIX_HEAD)
+            reader = csv.reader(src.lines())
+            n = -1
+            body = []
+            for r in reader:
+                n += 1
+                if n <= pair_i:
+                    continue
+                if sum(1 for x in r[:first_day_col] if x.strip()) < 4:
+                    continue                                     # page lines, "Report generated by", blank lines
+                body.append(r)
+                if data_cols is None and len(body) >= 30:
+                    data_cols = _matrix_text_cols(body, want, first_day_col)
+                    for b in body:
+                        lines, feeders, off_total, out_range = _matrix_out(w, b, data_cols, pairs, day_date, pair_values,
+                                                                           days_seen, lines, feeders, off_total, out_range)
+                    body = []
+                elif data_cols is not None:
+                    lines, feeders, off_total, out_range = _matrix_out(w, r, data_cols, pairs, day_date, pair_values,
+                                                                       days_seen, lines, feeders, off_total, out_range)
+                    body = []
+            if body:
+                data_cols = data_cols or _matrix_text_cols(body, want, first_day_col)
+                for b in body:
+                    lines, feeders, off_total, out_range = _matrix_out(w, b, data_cols, pairs, day_date, pair_values,
+                                                                       days_seen, lines, feeders, off_total, out_range)
+    except (OSError, csv.Error) as e:
+        _remove_quietly(out_path)
+        raise UserError("This file could not be read:\n%s\n(%s)" % (path, e))
+    finally:
+        src.close()
+    note = "it is a day-wise tripping count (a pair of columns for each day of the month). The app turned it into %s lines, " \
+           "one for each feeder and day with an outage, from %s feeders" % ("{:,}".format(lines), "{:,}".format(feeders))
+    if days_seen:
+        note += ", for %s" % ", ".join(d.strftime("%d.%m.%Y") for d in sorted(days_seen))
+    if not month_from:
+        note += ". The month is not written at the top of the file, so the lines take the report date"
+    if off_total:
+        note += ". In %d feeder line(s) the days do not add up to the Total column; the days were used" % off_total
+    if out_range:
+        note += ". %d figure(s) outside the dates at the top of the file were left out" % out_range
+    return out_path, note + "."
+
+
+def _matrix_text_cols(body, want, first_day_col):
+    """The column of each text field. Some exports put the figures a column away from their headings: the filled
+    columns are then matched to the headings in their order."""
+    head_pos = sorted(want.values())
+    filled = {}
+    for r in body:
+        for j, c in enumerate(r[:first_day_col]):
+            if c.strip():
+                filled[j] = filled.get(j, 0) + 1
+    data_pos = sorted(j for j, k in filled.items() if k >= max(1, int(0.5 * len(body))))
+    if len(data_pos) == len(head_pos) and data_pos != head_pos:
+        move = dict(zip(head_pos, data_pos))
+        return dict((f, move[j]) for f, j in want.items())
+    return dict(want)
+
+
+def _matrix_out(w, r, cols, pairs, day_date, pair_values, days_seen, lines, feeders, off_total, out_range):
+    def cell(f):
+        j = cols.get(f, -1)
+        return r[j].strip() if 0 <= j < len(r) else ""
+    if not cell("feeder") and not cell("fcode"):
+        return lines, feeders, off_total, out_range
+    feeders += 1
+    tot_secs = tot_cnt = 0
+    total = None
+    for day, hc, end in pairs:
+        hrs, cnt = pair_values(r, hc, end)
+        if day == 0:
+            total = (hrs, cnt)
+            continue
+        if hrs is None and cnt is None:
+            continue
+        secs = parse_duration(hrs or "0:00") or 0
+        n = int(float(cnt)) if cnt else 0
+        if secs == 0 and n == 0:
+            continue
+        tot_secs += secs
+        tot_cnt += n
+        d = day_date(day)
+        if d is None and day_date.known:                  # a day outside the dates at the top of the file
+            out_range += 1
+            continue
+        if d:
+            days_seen.add(d)
+        w.writerow([cell("circle"), cell("division"), cell("substation"), cell("feeder"), cell("fcode"), cell("msn"),
+                    cell("ftype"), d.strftime("%d-%m-%Y") if d else "", n,
+                    "%d:%02d:%02d" % (secs // 3600, (secs % 3600) // 60, secs % 60)])
+        lines += 1
+    if total is not None and (total[0] or total[1]):
+        if (parse_duration(total[0] or "0:00") or 0) != tot_secs or int(float(total[1] or 0)) != tot_cnt:
+            off_total += 1
+    return lines, feeders, off_total, out_range
+
+
 def find_layout(path):
     """Looks at the top of the file to find the separator and the heading row.
     Returns a dict: sep, notes (text above the heading), fixed (column map of a file with no
@@ -928,6 +1165,15 @@ def find_layout(path):
 def dates_inside(path, limit=400):
     """Looks at the first rows of a file and returns the dates written in its Date column, as {date: rows}."""
     out = {}
+    try:
+        conv = day_matrix_copy(path)
+    except UserError:
+        conv = None
+    if conv:
+        try:
+            return dates_inside(conv[0], limit)
+        finally:
+            _remove_quietly(conv[0])
     try:
         lay = find_layout(path)
         src = LineSource(path)
@@ -1083,6 +1329,10 @@ def read_files(inputs, report_date, master, types, store, log, progress, cancel)
         seen_discom = {}
         if cancel.is_set():
             raise Cancelled()
+        orig_path, conv = path, day_matrix_copy(path)
+        if conv:
+            path = conv[0]
+            log("info", "File %d (%s): %s" % (file_no, short, conv[1]))
         try:
             lay = find_layout(path)
             sep, notes = lay["sep"], lay["notes"]
@@ -1267,6 +1517,9 @@ def read_files(inputs, report_date, master, types, store, log, progress, cancel)
             raise UserError("This file could not be read to the end:\n%s\n(%s)\nCheck the drive and try again." % (path, e))
         finally:
             src.close()
+            if conv:
+                _remove_quietly(path)
+                path = orig_path
         db.commit()
         done_bytes += max(1, os.path.getsize(path))
         c["files"] += 1
