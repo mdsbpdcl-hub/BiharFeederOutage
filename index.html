@@ -2804,7 +2804,7 @@ function renderAreaTop($c, A, all){
     var bl = areaGroups(dg.list.filter(function(f){ return f.block !== NOT_TAGGED; }), 'block').filter(function(g){ return g.s.count > 0; });
     var big = bl.filter(function(g){ return g.s.w >= 3; }), pool = big.length >= 6 ? big : bl;
     pool.sort(function(a, b){ return b.s.supply - a.s.supply || a.name.localeCompare(b.name); });
-    var k = Math.min(3, pool.length);
+    var k = Math.min(3, Math.floor(pool.length / 2));      // a block is never in both lists (Arwal, Sheohar have under 6 blocks)
     var goBlock = function(b){ return function(){ A.block = b; A.feeder = ''; A.more = false; render(); }; };
     var col = function(title, cls, list){
       return el('div', null, [el('div', {class:'rkh'}, [el('span', {class:'chip ' + cls}, [el('i', {class:'dt', 'aria-hidden':'true'}), title])])].concat(list.map(function(g, i){
@@ -2812,7 +2812,8 @@ function renderAreaTop($c, A, all){
       })));
     };
     if (pool.length){
-      side.appendChild(el('div', {class:'tb3'}, [col('Top ' + k + ' blocks', 's-good', pool.slice(0, k)), col('Bottom ' + k + ' blocks', 's-serious', pool.slice().reverse().slice(0, k))]));
+      side.appendChild(k ? el('div', {class:'tb3'}, [col('Top ' + k + (k === 1 ? ' block' : ' blocks'), 's-good', pool.slice(0, k)), col('Bottom ' + k + (k === 1 ? ' block' : ' blocks'), 's-serious', pool.slice().reverse().slice(0, k))])
+                         : el('div', null, [col('Only block with figures', 's-good', pool.slice(0, 1))]));
       side.appendChild(el('div', {class:'sub3', style:'margin-top:8px', text:'By average supply. ' + (pool === big && big.length < bl.length ? 'Blocks with 3 or more feeders; ' : '') + bl.length + ' blocks have figures. Tap a block to open it.'}));
     } else side.appendChild(el('div', {class:'empty', text:'No block of this district is tagged yet.'}));
   }
