@@ -883,12 +883,12 @@ def _xlsx_kind(code):
     return ""
 
 
-def _xlsx_value_text(num, kind):
+def _xlsx_value_text(num, kind, base=None):
     if kind == "time":
         secs = int(round(num * 86400))
         return "%d:%02d:%02d" % (secs // 3600, (secs % 3600) // 60, secs % 60)
     if kind == "date":
-        d = datetime.datetime(1899, 12, 30) + datetime.timedelta(seconds=int(round(num * 86400)))
+        d = (base or datetime.datetime(1899, 12, 30)) + datetime.timedelta(seconds=int(round(num * 86400)))
         return d.strftime("%d-%m-%Y %H:%M:%S") if (d.hour or d.minute or d.second) else d.strftime("%d-%m-%Y")
     if num == int(num) and abs(num) < 1e15:
         return str(int(num))
@@ -935,11 +935,22 @@ def excel_csv_copy(path):
                     else:
                         kinds.append(_xlsx_kind(custom.get(fid, "")))
             wb = ElementTree.fromstring(z.read("xl/workbook.xml"))
+            pr = wb.find(NS + "workbookPr")
+            base = datetime.datetime(1904, 1, 1) if (pr is not None and pr.get("date1904") in ("1", "true")) else None
             rels = ElementTree.fromstring(z.read("xl/_rels/workbook.xml.rels"))
             target = dict((r.get("Id"), r.get("Target")) for r in rels)
-            first = wb.find(NS + "sheets").findall(NS + "sheet")[0]
-            tgt = target[first.get(RNS + "id")].lstrip("/")
-            part = tgt if tgt.startswith("xl/") else "xl/" + tgt
+            parts = []
+            for sh in wb.find(NS + "sheets").findall(NS + "sheet"):
+                tgt = target[sh.get(RNS + "id")].lstrip("/")
+                parts.append(tgt if tgt.startswith("xl/") else "xl/" + tgt)
+            # the first sheet with more than a few lines (a cover sheet or an empty first sheet is passed over)
+            part = parts[0]
+            for cand in parts:
+                with z.open(cand) as fh:
+                    k = sum(1 for _, el in ElementTree.iterparse(fh, events=("end",)) if el.tag == NS + "row")
+                if k > 3:
+                    part = cand
+                    break
             w = csv.writer(fo)
             with z.open(part) as fh:
                 for _, el in ElementTree.iterparse(fh, events=("end",)):
@@ -958,8 +969,10 @@ def excel_csv_copy(path):
                             val = "".join(x.text or "" for x in c.iter(NS + "t"))
                         elif t == "s":
                             val = shared[int(v.text)] if v is not None and v.text else ""
-                        elif t in ("str", "e"):
+                        elif t in ("str", "e", "d"):
                             val = v.text if v is not None and v.text else ""
+                            if t == "d":                                    # a date written as 2026-11-23T10:15:00
+                                val = val.replace("T", " ")
                         elif t == "b":
                             val = "TRUE" if (v is not None and v.text == "1") else "FALSE"
                         elif v is None or not v.text:
@@ -971,7 +984,7 @@ def excel_csv_copy(path):
                                 val = v.text
                             else:
                                 sidx = int(c.get("s") or 0)
-                                val = _xlsx_value_text(num, kinds[sidx] if sidx < len(kinds) else "")
+                                val = _xlsx_value_text(num, kinds[sidx] if sidx < len(kinds) else "", base)
                         vals[ci] = val
                     el.clear()
                     w.writerow(vals)
@@ -983,6 +996,14 @@ def excel_csv_copy(path):
         _remove_quietly(out_path)
         raise UserError("This Excel file could not be read:\n%s\n(%s)\nSave it as CSV and add the CSV file instead." % (path, e))
     return out_path, "it is an Excel file; the app read its first sheet (%s lines)" % "{:,}".format(n_rows)
+
+
+TEMP_COPIES = []          # temporary CSV copies made in this run; removed at the end of the run whatever happens
+
+
+def remove_temp_copies():
+    while TEMP_COPIES:
+        _remove_quietly(TEMP_COPIES.pop())
 
 
 def readable_copy(path):
@@ -1004,6 +1025,7 @@ def readable_copy(path):
         use = got[0]
         temps.append(use)
         notes.append(got[1])
+    TEMP_COPIES.extend(temps)
     return use, temps, notes
 
 
@@ -1075,7 +1097,14 @@ def day_matrix_copy(path):
     for n, hc in enumerate(hrs_cols):
         end = hrs_cols[n + 1] if n + 1 < len(hrs_cols) else hc + 3
         lab = [labels[j] for j in sorted(labels) if hc - 2 <= j <= hc]
-        day = lab[-1] if lab else (n + 1)
+        if lab:
+            day = lab[-1]
+        elif n == len(hrs_cols) - 1 and len(hrs_cols) > 1:
+            day = 0                                       # the last pair with no "Day" label: the Total
+        else:
+            day = n + 1
+        if day > 31:
+            day = 0
         pairs.append((day, hc, end))
     # the text columns: headings before the day columns; the figures may sit a column away from their headings
     want = {}
@@ -1130,17 +1159,24 @@ def day_matrix_copy(path):
     day_date.days = set()
 
     def pair_values(r, hc, end):
+        """(hours, count) of one day. Hours sit in the Hrs column, the count after it."""
+        got = [(j, r[j].strip()) for j in range(hc, min(end, len(r))) if r[j].strip()]
         hrs = cnt = None
-        for j in range(hc, min(end, len(r))):
-            v = r[j].strip()
-            if not v:
-                continue
-            if hrs is None and ":" in v:
+        if len(got) >= 2:
+            hrs, cnt = got[0][1], got[1][1]
+        elif got:
+            j, v = got[0]
+            if ":" in v or (j == hc and "." in v):
                 hrs = v
-            elif hrs is None and cnt is not None and re.match(r"^\d+\.\d+$", v):     # hours written as 1.50
-                hrs = "%d:%02d" % (int(float(v)), int(round((float(v) % 1) * 60)))
-            elif cnt is None and re.match(r"^\d+(\.0+)?$", v):
+            else:
                 cnt = v
+        if hrs is not None and ":" not in hrs:
+            try:                                          # hours written as 1.50
+                hrs = "%d:%02d" % (int(float(hrs)), int(round((float(hrs) % 1) * 60)))
+            except ValueError:
+                hrs = None
+        if cnt is not None and not re.match(r"^\d+(\.0+)?$", cnt):
+            cnt = None
         return hrs, cnt
 
     fd, out_path = tempfile.mkstemp(prefix="daywise_", suffix=".csv")
@@ -1211,11 +1247,22 @@ def _matrix_text_cols(body, want, first_day_col):
         for j, c in enumerate(r[:first_day_col]):
             if c.strip():
                 filled[j] = filled.get(j, 0) + 1
-    data_pos = sorted(j for j, k in filled.items() if k >= max(1, int(0.5 * len(body))))
+    half = max(1, int(0.5 * len(body)))
+    data_pos = sorted(j for j, k in filled.items() if k >= half)
     if len(data_pos) == len(head_pos) and data_pos != head_pos:
         move = dict(zip(head_pos, data_pos))
         return dict((f, move[j]) for f, j in want.items())
-    return dict(want)
+    cols = dict(want)
+    used = set(j for j in cols.values() if filled.get(j, 0) >= half)
+    for f, j in sorted(cols.items(), key=lambda x: x[1]):
+        if filled.get(j, 0) >= half:
+            continue
+        for k in (j - 1, j + 1, j - 2, j + 2):
+            if 0 <= k < first_day_col and filled.get(k, 0) >= half and k not in used:
+                cols[f] = k
+                used.add(k)
+                break
+    return cols
 
 
 def _matrix_out(w, r, cols, pairs, day_date, pair_values, days_seen, lines, feeders, off_total, out_range):
@@ -1328,6 +1375,8 @@ def dates_inside(path, limit=400):
         finally:
             for t in temps:
                 _remove_quietly(t)
+                if t in TEMP_COPIES:
+                    TEMP_COPIES.remove(t)
     try:
         lay = find_layout(path)
         src = LineSource(path)
@@ -2808,6 +2857,7 @@ def make_report(inputs, out_folder, report_date, keep_other, log, progress, canc
         tables, info = build_tables(store, master, counts, log, lambda f, t: progress(0.75 + 0.15 * f, t), cancel)
     finally:
         store.close()
+        remove_temp_copies()
     both = ("SBPDCL", "NBPDCL")
     main_path, part_paths = output_names(out_folder, info["d_max"], both)
     progress(0.92, "Saving the Excel files")
