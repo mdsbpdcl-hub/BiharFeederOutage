@@ -2776,7 +2776,7 @@ function estRows(district, from){
             cell(hrs(e.s.supply), null, {dim:true, bold:true}), '-', cell('Estimate', null, {dim:true})];
   }).filter(Boolean);
 }
-function feederRows(list){
+function areaFeederRows(list){
   var fs = list.filter(function(f){ return !f.orphan; }).map(function(f){ return {f:f, s:areaSum([f])}; });
   fs.sort(ui.area.sort === 'name' ? function(a, b){ return a.f.name.localeCompare(b.f.name); } : ui.area.sort === 'ev' ? function(a, b){ return b.f.ev - a.f.ev; } : function(a, b){ return a.s.supply - b.s.supply; });
   return fs.map(function(x, i){ var f = x.f;
@@ -2817,7 +2817,7 @@ function pdfArea(mode){
   } else if (A.block){
     var inB = inD.filter(function(f){ return f.block === A.block; });
     areaFigures(P, areaSum(inB), perDay);
-    table(P, FEEDER_HEAD, feederRows(inB), {cols:FEEDER_COLS, size:8.4, tight:true, flow:true});
+    table(P, FEEDER_HEAD, areaFeederRows(inB), {cols:FEEDER_COLS, size:8.4, tight:true, flow:true});
   } else if (A.district){
     var S = areaSum(inD); areaFigures(P, S, perDay);
     var blocks = areaSort(areaGroups(inD, 'block')), h2 = AREA_HEAD.slice(); h2[1] = 'Block';
@@ -2825,7 +2825,7 @@ function pdfArea(mode){
     table(P, h2, [areaTotal(A.district + ' (all blocks)', S, uniq(inD, function(f){ return f.discom; }))].concat(rows, estRows(A.district, rows.length + 1)), {cols:AREA_COLS, size:8.4, tight:true, flow:true, pad:2.4});
     if (mode === 'detail') blocks.forEach(function(g){
       heading(P, g.name + '   ' + hrs(g.s.supply) + ' hr:min supply, ' + int(g.s.w) + ' feeders');
-      table(P, FEEDER_HEAD, feederRows(g.list), {cols:FEEDER_COLS, size:8.2, tight:true});
+      table(P, FEEDER_HEAD, areaFeederRows(g.list), {cols:FEEDER_COLS, size:8.2, tight:true});
     });
   } else {
     var S2 = areaSum(all); areaFigures(P, S2, perDay);
