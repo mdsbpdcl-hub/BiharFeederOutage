@@ -619,6 +619,8 @@ table.st th{background:#f4f7f9}
 .esttag{display:inline-block;margin-left:8px;padding:1px 8px;border:1px dashed var(--faint);border-radius:99px;font-size:11.5px;font-weight:500;color:var(--ink2);vertical-align:2px}
 .arow.est .t1{font-style:italic}
 .estnote p{margin:6px 0 12px;color:var(--ink2);line-height:1.5}
+.pdfrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin:-4px 0 14px}
+.pdfrow .pdfgo{margin-left:0}
 </style>
 </head>
 <body data-theme="sunrise">
@@ -1861,7 +1863,7 @@ function renderAgri(sec){
 /* ---------- PDF reports (made in the browser; nothing is stored anywhere) ---------- */
 var PDF_LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'];
-var PW = 595.28, PH = 841.89, PM = 36;
+var PW = 595.28, PH = 841.89, PM = 36, PDF_FONT = 'helvetica';
 var INK = '#1d2433', MUTED = '#667085', LINE = '#e7eaf0';
 var STATUS_COL = {Good:['#1a8a4c', '#eaf8f0'], Watch:['#9a6400', '#fff7e4'], High:['#b8352b', '#fff0ee'], 'Very high':['#86211b', '#fbe7e5'], 'No data':['#6b7385', '#f4f5f8']};
 var DISCOM_HEX = {SBPDCL:'#2a78d6', NBPDCL:'#eb6834', BIHAR:'#475467'};
@@ -1898,8 +1900,8 @@ function newPdf(title, sub, wide){
   var P = {doc:doc, y:0, t1:cssVar('--t1') || '#f0752f', t2:cssVar('--t2') || '#f7a531', title:title, sub:sub};
   doc.setProperties({title:title + ' - ' + sub});
   for (var i = 0; i < 48; i++){ fill(doc, mix(P.t1, P.t2, i / 47)); doc.rect(i * PW / 48, 0, PW / 48 + 0.8, 72, 'F'); }
-  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text(title, PM, 33);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.text(sub, PM, 52);
+  doc.setTextColor(255, 255, 255); doc.setFont(PDF_FONT, 'bold'); doc.setFontSize(18); doc.text(title, PM, 33);
+  doc.setFont(PDF_FONT, 'normal'); doc.setFontSize(10.5); doc.text(sub, PM, 52);
   doc.setFontSize(8.5); doc.text('Bihar 11 kV Feeder Outage', PW - PM, 33, {align:'right'}); doc.text('Made on ' + madeOn(), PW - PM, 52, {align:'right'});
   P.y = 96;
   return P;
@@ -1911,11 +1913,11 @@ function drawHeading(P){
   var h = P.pending; P.pending = null;
   need(P, 60);
   var d = P.doc; fill(d, h.colour || P.t1); d.roundedRect(PM, P.y - 11, 4, 15, 2, 2, 'F');
-  ink(d, INK); d.setFont('helvetica', 'bold'); d.setFontSize(12.5); d.text(h.text, PM + 11, P.y + 1);
+  ink(d, INK); d.setFont(PDF_FONT, 'bold'); d.setFontSize(12.5); d.text(h.text, PM + 11, P.y + 1);
   P.y += 14;
 }
 function para(P, text){
-  drawHeading(P); need(P, 24); var d = P.doc; ink(d, MUTED); d.setFont('helvetica', 'normal'); d.setFontSize(9);
+  drawHeading(P); need(P, 24); var d = P.doc; ink(d, MUTED); d.setFont(PDF_FONT, 'normal'); d.setFontSize(9);
   var lines = d.splitTextToSize(text, PW - 2 * PM); d.text(lines, PM, P.y + 4); P.y += 12 * lines.length + 8;
 }
 function cell(text, v, extra){ var c = {content:String(text), v:v}; if (extra) for (var k in extra) c[k] = extra[k]; return c; }
@@ -1926,7 +1928,7 @@ function table(P, head, body, opt){
   function settings(d, startY){
     return {
       startY:startY, head:[head], body:body, theme:'grid', margin:{left:PM, right:PM, top:48, bottom:48}, rowPageBreak:'avoid',
-      styles:{font:'helvetica', fontSize:opt.size || 8.6, cellPadding:{top:opt.tight ? 3 : 4, right:5, bottom:opt.bar !== undefined ? (opt.tight ? 6 : 7) : (opt.tight ? 3 : 4), left:5}, textColor:hex(INK), lineColor:hex(LINE), lineWidth:0.5, valign:'middle', overflow:'linebreak'},
+      styles:{font:PDF_FONT, fontSize:opt.size || 8.6, cellPadding:{top:opt.pad || (opt.tight ? 3 : 4), right:5, bottom:opt.bar !== undefined ? (opt.tight ? 6 : 7) : (opt.pad || (opt.tight ? 3 : 4)), left:5}, textColor:hex(INK), lineColor:hex(LINE), lineWidth:0.5, valign:'middle', overflow:'linebreak'},
       headStyles:{fillColor:hex(mix(P.t1, INK, 0.12)), textColor:255, fontStyle:'bold', halign:'center', valign:'middle'},
       alternateRowStyles:{fillColor:[248, 249, 252]},
       columnStyles:opt.cols || {},
@@ -1937,6 +1939,7 @@ function table(P, head, body, opt){
         if (raw.status && STATUS_COL[raw.status]){ x.cell.styles.fillColor = hex(STATUS_COL[raw.status][1]); x.cell.styles.textColor = hex(STATUS_COL[raw.status][0]); x.cell.styles.fontStyle = 'bold'; }
         if (raw.bold || raw.contact) x.cell.styles.fontStyle = 'bold';
         if (raw.dim) x.cell.styles.textColor = hex(MUTED);
+        if (raw.total) x.row.cells && Object.keys(x.row.cells).forEach(function(k){ x.row.cells[k].styles.fillColor = [232, 241, 246]; x.row.cells[k].styles.fontStyle = x.row.cells[k].raw && x.row.cells[k].raw.status ? 'bold' : 'bold'; });
       },
       willDrawCell:function(x){
         if (x.section === 'body' && x.cell.raw && x.cell.raw.contact) x.cell.text = [];     // drawn below: name on the left, number in the middle
@@ -1946,7 +1949,7 @@ function table(P, head, body, opt){
         var raw = x.cell.raw || {}, c = x.cell;
         if (raw.contact){
           var fs = c.styles.fontSize, lh = fs * 1.15, k = raw.contact;
-          d.setFont('helvetica', 'bold'); d.setFontSize(fs);
+          d.setFont(PDF_FONT, 'bold'); d.setFontSize(fs);
           var lines = k.name ? d.splitTextToSize(k.name, c.width - 10) : [];
           var y0 = c.y + (c.height - lh * (lines.length + 1)) / 2 + fs * 0.85;
           ink(d, INK); lines.forEach(function(t, i){ d.text(t, c.x + 5, y0 + i * lh); });
@@ -1969,7 +1972,7 @@ function table(P, head, body, opt){
   var d = spare; spare.autoTable(settings(spare, 48));
   var tall = spare.getNumberOfPages() > 1 ? Infinity : spare.lastAutoTable.finalY - 48;
   var hh = P.pending ? 16 : 0;
-  if (P.y + hh + tall > PH - 48 && P.y > 110){ P.doc.addPage(); P.y = 56; }
+  if (!opt.flow && P.y + hh + tall > PH - 48 && P.y > 110){ P.doc.addPage(); P.y = 56; }
   drawHeading(P);
   d = P.doc; d.autoTable(settings(d, P.y));
   P.y = d.lastAutoTable.finalY + 18;
@@ -1978,7 +1981,7 @@ function finish(P, name){
   var d = P.doc, n = d.getNumberOfPages();
   for (var i = 1; i <= n; i++){
     d.setPage(i); stroke(d, LINE); d.setLineWidth(0.5); d.line(PM, PH - 32, PW - PM, PH - 32);
-    ink(d, MUTED); d.setFont('helvetica', 'normal'); d.setFontSize(8);
+    ink(d, MUTED); d.setFont(PDF_FONT, 'normal'); d.setFontSize(8);
     d.text(P.title + '  |  ' + P.sub, PM, PH - 20); d.text('Page ' + i + ' of ' + n, PW - PM, PH - 20, {align:'right'});
   }
   var url = null;
@@ -2344,12 +2347,12 @@ function areaSum(list){
   s.mpi = s.ev ? s.min / s.ev : 0;
   return s;
 }
-function hrs(h){ return dec(h, 1); }
+function hrs(h){ var m = Math.max(0, Math.ceil(num(h) * 60 - 1e-6)); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }   // hours of supply as hr:min; with the outage (hhmm) it makes 24:00
 function supplyDial(h){
   // half-circle meter for hours of supply, 0 to 24
   var W = 300, R = 116, cx = 150, cy = 138, sw = 20;
   var f = Math.min(1, Math.max(0, h / 24)), len = Math.PI * R, gid = 'sg' + (++gradNo);
-  var svg = sv('svg', {viewBox:'0 0 ' + W + ' 156', role:'img', 'aria-label':'Average supply per feeder ' + hrs(h) + ' hours a day'});
+  var svg = sv('svg', {viewBox:'0 0 ' + W + ' 156', role:'img', 'aria-label':'Average supply per feeder ' + hrs(h) + ' hours and minutes a day'});
   var gr = sv('linearGradient', {id:gid, x1:'0', y1:'0', x2:'1', y2:'0'});
   gr.appendChild(sv('stop', {offset:'0', style:'stop-color:var(--t1)'})); gr.appendChild(sv('stop', {offset:'1', style:'stop-color:var(--t2)'}));
   svg.appendChild(sv('defs', null, [gr]));
@@ -2454,6 +2457,10 @@ function renderArea($c){
   var multi = dayInfo.some(function(x){ return x.days > 1; });
   if (upto.length) cr.appendChild(el('span', {class:'chip', style:'margin-left:auto'}, [icon('cal'), 'Feeder figures as on ' + niceDate(upto[0]) + (upto.length > 1 && upto[1] !== upto[0] ? ' / ' + niceDate(upto[1]) : '')]));
   $c.appendChild(cr);
+  var pdfs = areaPdfChoices(A, isEst, estName);
+  $c.appendChild(el('div', {class:'pdfrow'}, pdfs.map(function(o, i){
+    return el('button', {class:'btn' + (i ? '' : ' go') + ' pdfgo', onclick:function(){ runAreaPdf(o.mode); }}, [icon('doc'), o.t]);
+  })));
 
   if (fsel) { renderFeeder($c, fsel, multi); return; }
   if (isEst) { renderEstimate($c, A, estName, multi); return; }
@@ -2463,7 +2470,7 @@ function renderArea($c){
   var hv = el('span', {class:'v'}); hv.textContent = hrs(S.supply);
   var dialCard = el('div', {class:'card dialcard'}, [
     el('div', {class:'dialbox'}, [supplyDial(S.supply)]),
-    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hrs'})]), el('div', {class:'l', text:'Average supply per feeder' + perDay})]),
+    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hr:min'})]), el('div', {class:'l', text:'Average supply per feeder' + perDay})]),
     el('div', {class:'chiprow'}, [chip(b0), el('span', {class:'chip', text:'Outage ' + hhmm(S.avgMin) + ' hr:min'})])
   ]);
   function kpi(cls, ic, label, value, sub){
@@ -2504,12 +2511,12 @@ function renderArea($c){
       el('div', null, [el('span', {text:'Agriculture feeders known here'}), el('b', {text:int(agIn.length)})]),
       el('div', null, [el('span', {text:'With outage'}), el('b', {text:int(agOut.length)})]),
       el('div', null, [el('span', {text:'Interruptions' + perDay}), el('b', {text:int(agEv)})]),
-      el('div', null, [el('span', {text:'Average supply of those with outage'}), el('b', {text:agOut.length ? hrs(24 - agMin / agOut.length / 60) + ' hrs' : '-'})])
+      el('div', null, [el('span', {text:'Average supply of those with outage'}), el('b', {text:agOut.length ? hrs(24 - agMin / agOut.length / 60) + ' hr:min' : '-'})])
     ])]);
   if (A.block && agOut.length){
     var top = agOut.slice().sort(function(a, b){ return b.min - a.min; }).slice(0, 5);
     agCard.appendChild(el('div', {class:'agrows', style:'margin-top:12px;padding-top:10px;border-top:1px solid var(--line)'}, top.map(function(f){
-      return el('div', null, [el('span', {text:f.name}), el('b', {text:hrs(24 - f.min / 60) + ' hrs'})]);
+      return el('div', null, [el('span', {text:f.name}), el('b', {text:hrs(24 - f.min / 60) + ' hr:min'})]);
     })));
   }
   $c.appendChild(el('div', {class:'aside2'}, [bandsCard, agCard]));
@@ -2538,13 +2545,13 @@ function renderArea($c){
     el('span', {style:'flex:1'}), pills([{v:'low', t:'Least supply'}, {v:'ev', t:'Most interruptions'}, {v:'size', t:'Most feeders'}, {v:'name', t:'A to Z'}], A.sort || 'low',
       function(v){ A.sort = v; render(); }, 'Order')]));
   var head = el('div', {class:'arow head', 'aria-hidden':'true'}, [el('span', {text:level === 'feeder' ? 'Feeder' : (level === 'block' ? 'Block' : 'District')}),
-    el('span', {class:'hide-s', text:'Average supply'}), el('span', {class:'r', text:'hrs'}), el('span', {class:'r hide-s', text:'Interruptions'}), el('span', {class:'r', text:'Under 20 hrs'})]);
+    el('span', {class:'hide-s', text:'Average supply'}), el('span', {class:'r', text:'hr:min'}), el('span', {class:'r hide-s', text:'Interruptions'}), el('span', {class:'r', text:'Under 20 hrs'})]);
   var lst = el('div', {class:'alist'}, [head]);
   var showN = A.more ? groups.length : Math.min(groups.length, 40);
   groups.slice(0, showN).forEach(function(g){
     var s = g.s, low = s.supply < 20;
     var colour = s.avgMin <= 30 ? 'var(--good)' : s.avgMin <= 60 ? 'var(--warn)' : s.avgMin <= 120 ? 'var(--serious)' : 'var(--crit)';
-    var row = el('button', {class:'arow', 'aria-label':g.name + ', average supply ' + hrs(s.supply) + ' hours', onclick:function(){
+    var row = el('button', {class:'arow', 'aria-label':g.name + ', average supply ' + hrs(s.supply) + ' hours and minutes', onclick:function(){
         if (level === 'district') { A.district = g.go; A.block = ''; } else if (level === 'block') A.block = g.go; else A.feeder = g.go;
         A.more = false; render(); window.scrollTo({top:0, behavior:'smooth'}); }}, [
       el('span', {style:'min-width:0'}, [el('div', {class:'t1', text:g.name}), el('div', {class:'t2', text:(level === 'feeder' ? g.sub : int(s.w) + ' feeders · ' + g.sub)})]),
@@ -2559,7 +2566,7 @@ function renderArea($c){
     var e = estimateOf(A.district, b);
     if (!e.s) return;
     var s = e.s, colour = s.avgMin <= 30 ? 'var(--good)' : s.avgMin <= 60 ? 'var(--warn)' : s.avgMin <= 120 ? 'var(--serious)' : 'var(--crit)';
-    lst.appendChild(el('button', {class:'arow est', 'aria-label':b + ', estimated supply ' + hrs(s.supply) + ' hours', onclick:function(){
+    lst.appendChild(el('button', {class:'arow est', 'aria-label':b + ', estimated supply ' + hrs(s.supply) + ' hours and minutes', onclick:function(){
         A.block = EST + b; A.more = false; render(); window.scrollTo({top:0, behavior:'smooth'}); }}, [
       el('span', {style:'min-width:0'}, [el('div', {class:'t1'}, [b, el('span', {class:'esttag', text:'Estimate'})]),
         el('div', {class:'t2', text:'No feeder in the figures · average of ' + e.parts.length + (e.parts.length === 1 ? ' neighbouring block' : ' neighbouring blocks')})]),
@@ -2585,7 +2592,7 @@ function renderEstimate($c, A, b, multi){
   var hv = el('span', {class:'v'}); hv.textContent = hrs(S.supply);
   var dialCard = el('div', {class:'card dialcard'}, [
     el('div', {class:'dialbox'}, [supplyDial(S.supply)]),
-    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hrs'})]), el('div', {class:'l', text:'Estimated supply per feeder' + perDay})]),
+    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hr:min'})]), el('div', {class:'l', text:'Estimated supply per feeder' + perDay})]),
     el('div', {class:'chiprow'}, [chip(band(S.avgMin)), el('span', {class:'chip', text:'Outage ' + hhmm(S.avgMin) + ' hr:min'})])
   ]);
   var why = el('div', {class:'card estnote'}, [
@@ -2602,10 +2609,10 @@ function renderEstimate($c, A, b, multi){
   var listCard = el('div', {class:'card', style:'margin-top:16px'});
   listCard.appendChild(el('div', {class:'sechead', style:'margin-bottom:4px'}, [el('h3', {text:'Blocks around ' + b}), el('span', {class:'count', text:int(e.parts.length)})]));
   var lst = el('div', {class:'alist'}, [el('div', {class:'arow head', 'aria-hidden':'true'}, [el('span', {text:'Block'}),
-    el('span', {class:'hide-s', text:'Average supply'}), el('span', {class:'r', text:'hrs'}), el('span', {class:'r hide-s', text:'Interruptions'}), el('span', {class:'r', text:'Under 20 hrs'})])]);
+    el('span', {class:'hide-s', text:'Average supply'}), el('span', {class:'r', text:'hr:min'}), el('span', {class:'r hide-s', text:'Interruptions'}), el('span', {class:'r', text:'Under 20 hrs'})])]);
   e.parts.map(function(p){ return {p:p, s:areaSum(p.list)}; }).sort(function(x, y){ return x.s.supply - y.s.supply; }).forEach(function(g){
     var s = g.s, colour = s.avgMin <= 30 ? 'var(--good)' : s.avgMin <= 60 ? 'var(--warn)' : s.avgMin <= 120 ? 'var(--serious)' : 'var(--crit)';
-    lst.appendChild(el('button', {class:'arow', 'aria-label':g.p.block + ', average supply ' + hrs(s.supply) + ' hours', onclick:function(){
+    lst.appendChild(el('button', {class:'arow', 'aria-label':g.p.block + ', average supply ' + hrs(s.supply) + ' hours and minutes', onclick:function(){
         if (scope !== STATE_NAME && !g.p.list.some(function(f){ return f.discom === scope; })) scope = STATE_NAME;
         A.district = g.p.district; A.block = g.p.block; A.feeder = ''; A.more = false; render(); window.scrollTo({top:0, behavior:'smooth'}); }}, [
       el('span', {style:'min-width:0'}, [el('div', {class:'t1', text:g.p.block}), el('div', {class:'t2', text:g.p.district + ' · ' + int(s.w) + ' feeders'})]),
@@ -2627,7 +2634,7 @@ function renderFeeder($c, f, multi){
   ]);
   var hv = el('span', {class:'v'}); hv.textContent = hrs(sup);
   var dialCard = el('div', {class:'card dialcard'}, [el('div', {class:'dialbox'}, [supplyDial(sup)]),
-    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hrs'})]), el('div', {class:'l', text:'Supply' + perDay})]),
+    el('div', {class:'dialval supval'}, [el('div', null, [hv, el('span', {class:'u', text:'hr:min'})]), el('div', {class:'l', text:'Supply' + perDay})]),
     el('div', {class:'chiprow'}, [chip(band(f.min))])]);
   $c.appendChild(el('div', {class:'hero'}, [dialCard, el('div', null, [card, el('div', {class:'stats2'}, [
     stat('clock', 'Outage' + perDay, hhmm(f.min) + ' hr:min', f.min > 240 ? 'More than 4 hrs' : (f.min > 0 ? 'Up to 4 hrs' : 'No outage')),
@@ -2724,6 +2731,126 @@ function pdfBottom(){
       {bar:5, tight:true, size:8, cols:{0:{halign:'center', cellWidth:30}, 1:{halign:'left', cellWidth:118}, 2:{halign:'left', cellWidth:92}, 3:{halign:'left'}, 4:{halign:'left'}, 5:{halign:'center', cellWidth:90}, 6:{halign:'center', cellWidth:66}, 7:{halign:'center', cellWidth:112}, 8:{halign:'center', cellWidth:112}}});
   });
   finish(P, 'Highest_Average_Outage_' + fileDay() + '.pdf');
+}
+
+
+/* ---------- Supply by Area PDF reports (Times New Roman) ---------- */
+function areaPdfChoices(A, isEst, estName){
+  if (A.block && isEst) return [{mode:'summary', t:'PDF: ' + estName + ' (estimate)'}];
+  if (A.block) return [{mode:'summary', t:'PDF: Feeders of ' + (A.block === NOT_TAGGED ? 'Block not tagged' : A.block)}];
+  if (A.district) return [{mode:'summary', t:'PDF: Blocks of ' + A.district}, {mode:'detail', t:'PDF: Blocks and feeders of ' + A.district}];
+  return [{mode:'summary', t:'PDF: All districts'}, {mode:'detail', t:'PDF: All districts and blocks'}];
+}
+function areaList(){ var discom = scope === STATE_NAME ? '' : scope; return AREA.feeders.filter(function(f){ return !discom || f.discom === discom; }); }
+function areaGroups(list, key){
+  var by = {};
+  list.forEach(function(f){ var k = f[key]; (by[k] = by[k] || []).push(f); });
+  return Object.keys(by).map(function(k){ return {name:k, list:by[k], s:areaSum(by[k]), dcs:uniq(by[k], function(f){ return f.discom; })}; });
+}
+function areaSort(g){
+  var A = ui.area, sorts = {low:function(a, b){ return a.s.supply - b.s.supply; }, ev:function(a, b){ return b.s.avgEv - a.s.avgEv; },
+    size:function(a, b){ return b.s.w - a.s.w; }, name:function(a, b){ return a.name.localeCompare(b.name); }};
+  return g.sort(sorts[A.sort] || sorts.low);
+}
+function estBlocksOf(district){
+  var known = {};
+  AREA.feeders.forEach(function(f){ if (!f.orphan) known[f.district + '|' + f.block] = 1; });
+  return blocksOfDistrict(district).filter(function(b){ return !known[district + '|' + b]; }).sort();
+}
+var AREA_HEAD = ['No.', '', 'DISCOM', 'Feeders', 'With outage', 'Interruptions per feeder', 'Average outage (hr:min)', 'Average supply (hr:min)', 'Under 20 hrs (feeders)', 'Status'];
+var AREA_COLS = {0:{halign:'center', cellWidth:26}, 1:{halign:'left'}, 2:{halign:'center', cellWidth:52}, 3:{halign:'center', cellWidth:44}, 4:{halign:'center', cellWidth:44},
+                 5:{halign:'center', cellWidth:64}, 6:{halign:'center', cellWidth:54}, 7:{halign:'center', cellWidth:56}, 8:{halign:'center', cellWidth:48}, 9:{halign:'center', cellWidth:52}};
+function areaRow(i, g){
+  var s = g.s;
+  return [String(i), cell(g.name, null, {bold:true}), g.dcs.length > 1 ? 'Both' : g.dcs.join(''), int(s.w), int(s.n), dec(s.avgEv, 2), hhmm(s.avgMin),
+          cell(hrs(s.supply), s.supply, {bold:true}), int(s.over4), st(s.avgMin)];
+}
+function areaTotal(name, s, dcs){
+  return [cell('', null, {total:true}), cell(name, null, {bold:true, total:true}), dcs.length > 1 ? 'Both' : dcs.join(''), cell(int(s.w), null, {bold:true}), cell(int(s.n), null, {bold:true}), cell(dec(s.avgEv, 2), null, {bold:true}),
+          cell(hhmm(s.avgMin), null, {bold:true}), cell(hrs(s.supply), null, {bold:true}), cell(int(s.over4), null, {bold:true}), st(s.avgMin)];
+}
+function estRows(district, from){
+  return estBlocksOf(district).map(function(b, k){
+    var e = estimateOf(district, b); if (!e.s) return null;
+    return [String(from + k), cell(b + ' (estimate)', null, {dim:true}), '-', '-', '-', cell(dec(e.s.avgEv, 2), null, {dim:true}), cell(hhmm(e.s.avgMin), null, {dim:true}),
+            cell(hrs(e.s.supply), null, {dim:true, bold:true}), '-', cell('Estimate', null, {dim:true})];
+  }).filter(Boolean);
+}
+function feederRows(list){
+  var fs = list.filter(function(f){ return !f.orphan; }).map(function(f){ return {f:f, s:areaSum([f])}; });
+  fs.sort(ui.area.sort === 'name' ? function(a, b){ return a.f.name.localeCompare(b.f.name); } : ui.area.sort === 'ev' ? function(a, b){ return b.f.ev - a.f.ev; } : function(a, b){ return a.s.supply - b.s.supply; });
+  return fs.map(function(x, i){ var f = x.f;
+    return [String(i + 1), cell(f.name, null, {bold:true}), f.ss, f.type || '-', f.discom, dec(f.ev, f.ev % 1 ? 1 : 0), hhmm(f.min), cell(hrs(x.s.supply), x.s.supply, {bold:true}), st(f.min)]; });
+}
+var FEEDER_HEAD = ['No.', 'Feeder', 'Substation', 'Type', 'DISCOM', 'Interruptions', 'Outage (hr:min)', 'Supply (hr:min)', 'Status'];
+var FEEDER_COLS = {0:{halign:'center', cellWidth:26}, 1:{halign:'left'}, 2:{halign:'left', cellWidth:92}, 3:{halign:'center', cellWidth:46}, 4:{halign:'center', cellWidth:50},
+                   5:{halign:'center', cellWidth:64}, 6:{halign:'center', cellWidth:52}, 7:{halign:'center', cellWidth:52}, 8:{halign:'center', cellWidth:52}};
+function areaFigures(P, s, perDay){
+  var d = P.doc; ink(d, INK); d.setFont(PDF_FONT, 'normal'); d.setFontSize(10.5);
+  var t = 'Average supply ' + hrs(s.supply) + ' hr:min per feeder' + perDay + '   |   Average outage ' + hhmm(s.avgMin) + ' hr:min   |   Feeders ' + int(s.w) +
+          '   |   With outage ' + int(s.n) + ' (' + dec(s.pct, 1) + '%)   |   Interruptions per feeder ' + dec(s.avgEv, 2) + '   |   Under 20 hrs ' + int(s.over4);
+  var lines = d.splitTextToSize(t, PW - 2 * PM); d.text(lines, PM, P.y); P.y += 13 * lines.length + 10;
+}
+function pdfArea(mode){
+  var A = ui.area, discom = scope === STATE_NAME ? '' : scope, all = areaList();
+  var info = Object.keys(AREA.info).filter(function(d){ return !discom || d === discom; }).map(function(d){ return AREA.info[d]; });
+  var upto = info.map(function(x){ return x.upto; }).filter(Boolean), multi = info.some(function(x){ return x.days > 1; }), perDay = multi ? ' a day' : '';
+  var asOn = upto.length ? 'Feeder figures as on ' + niceDate(upto[0]) + (upto.length > 1 && upto[1] !== upto[0] ? ' / ' + niceDate(upto[1]) : '') : '';
+  var where = [discom || 'Bihar'];
+  var isEst = A.block.indexOf(EST) === 0, estName = isEst ? A.block.slice(EST.length) : '';
+  if (A.district) where.push(A.district);
+  if (A.block) where.push(isEst ? estName + ' (estimate)' : A.block);
+  var title = A.block ? (isEst ? estName + ' block (estimate)' : 'Feeders of ' + A.block) : A.district ? 'Blocks of ' + A.district : 'Supply by Area: all districts';
+  var P = newPdf(title, where.join(' > ') + (asOn ? '   |   ' + asOn : ''));
+  var inD = A.district ? all.filter(function(f){ return f.district === A.district; }) : all;
+  if (A.block && isEst){
+    var e = estimateOf(A.district, estName);
+    if (!e.s) { para(P, 'No feeder of this block or of the blocks around it is in the figures.'); }
+    else {
+      areaFigures(P, e.s, perDay);
+      para(P, 'No feeder of ' + estName + ' block is in the figures. The supply shown is the average of the feeders of the blocks around it; it is not added to any total.');
+      heading(P, 'Blocks around ' + estName);
+      var gs = e.parts.map(function(p){ return {name:p.block + ' (' + p.district + ')', list:p.list, s:areaSum(p.list), dcs:uniq(p.list, function(f){ return f.discom; })}; });
+      var h = AREA_HEAD.slice(); h[1] = 'Block';
+      table(P, h, [areaTotal('All blocks around', e.s, uniq([].concat.apply([], gs.map(function(g){ return g.list; })), function(f){ return f.discom; }))].concat(areaSort(gs).map(function(g, i){ return areaRow(i + 1, g); })), {cols:AREA_COLS, size:8.4, tight:true, flow:true, pad:2.4});
+    }
+  } else if (A.block){
+    var inB = inD.filter(function(f){ return f.block === A.block; });
+    areaFigures(P, areaSum(inB), perDay);
+    table(P, FEEDER_HEAD, feederRows(inB), {cols:FEEDER_COLS, size:8.4, tight:true, flow:true});
+  } else if (A.district){
+    var S = areaSum(inD); areaFigures(P, S, perDay);
+    var blocks = areaSort(areaGroups(inD, 'block')), h2 = AREA_HEAD.slice(); h2[1] = 'Block';
+    var rows = blocks.map(function(g, i){ return areaRow(i + 1, g); });
+    table(P, h2, [areaTotal(A.district + ' (all blocks)', S, uniq(inD, function(f){ return f.discom; }))].concat(rows, estRows(A.district, rows.length + 1)), {cols:AREA_COLS, size:8.4, tight:true, flow:true, pad:2.4});
+    if (mode === 'detail') blocks.forEach(function(g){
+      heading(P, g.name + '   ' + hrs(g.s.supply) + ' hr:min supply, ' + int(g.s.w) + ' feeders');
+      table(P, FEEDER_HEAD, feederRows(g.list), {cols:FEEDER_COLS, size:8.2, tight:true});
+    });
+  } else {
+    var S2 = areaSum(all); areaFigures(P, S2, perDay);
+    var ds = areaSort(areaGroups(all, 'district')), h3 = AREA_HEAD.slice(); h3[1] = 'District';
+    table(P, h3, [areaTotal((discom || 'Bihar') + ' (all districts)', S2, uniq(all, function(f){ return f.discom; }))].concat(ds.map(function(g, i){ return areaRow(i + 1, g); })), {cols:AREA_COLS, size:8.4, tight:true, flow:true, pad:2.4});
+    if (mode === 'detail') ds.forEach(function(g){
+      P.doc.addPage(); P.y = 56;
+      heading(P, g.name + ' district   ' + hrs(g.s.supply) + ' hr:min supply, ' + int(g.s.w) + ' feeders');
+      var bl = areaSort(areaGroups(g.list, 'block')), hb = AREA_HEAD.slice(); hb[1] = 'Block';
+      var rs = bl.map(function(b, i){ return areaRow(i + 1, b); });
+      table(P, hb, [areaTotal(g.name + ' (all blocks)', g.s, g.dcs)].concat(rs, estRows(g.name, rs.length + 1)), {cols:AREA_COLS, size:8.4, tight:true, flow:true, pad:2.4});
+    });
+  }
+  var nm = 'Supply_by_Area_' + where.join('_').replace(/[^0-9A-Za-z]+/g, '_') + (mode === 'detail' ? '_detail' : '') + '_' + String(upto[0] || '').replace(/[^0-9A-Za-z-]/g, '') + '.pdf';
+  finish(P, nm.replace(/_+/g, '_'));
+}
+function runAreaPdf(mode){
+  if (!AREA || AREA.empty){ toast('The figures are still loading. Try again in a moment.'); return; }
+  toast('Making the PDF ...');
+  pdfLibs().then(function(){
+    PDF_FONT = 'times';
+    try { pdfArea(mode); }
+    catch (err){ note('pdf failed', err); toast('Could not make the PDF. Please try again.'); }
+    finally { PDF_FONT = 'helvetica'; }
+  }, function(err){ note('pdf tools did not load', err); toast('Could not make the PDF: check the internet connection and try again.'); });
 }
 
 var MAKERS = {daily:pdfDaily, avg:pdfAverage, feeders:pdfFeeders, bottom:pdfBottom};
