@@ -5,7 +5,7 @@ Outage Dashboard Updation: the Bihar 11 kV feeder outage dashboard, and a page t
 | Page | Link | What it does |
 |---|---|---|
 | Dashboard | https://mdsbpdcl-hub.github.io/BiharFeederOutage/ | Overview, Highest Average Outage, and Supply by Area (DISCOM > District > Block > Feeder). Anyone with the link can see it. |
-| Update page | https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html | Choose the company CSV files, make the Excel reports, send them to the dashboard. Needs the upload password. |
+| Update page | https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html | Choose the company CSV or Excel files, make the Excel reports, send them to the dashboard. Needs the upload password. |
 | Agriculture list | https://mdsbpdcl-hub.github.io/BiharFeederOutage/update.html#list | The shared list of feeders that the companies type wrongly. Needs the upload password to change. |
 
 ## How it works

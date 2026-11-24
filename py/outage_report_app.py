@@ -867,6 +867,146 @@ def _no_heading_layout(rows):
     return None
 
 
+# Excel downloads (.xlsx) of the company files: the first sheet is written to a temporary CSV file, with dates and
+# times written out as text (dd-mm-yyyy hh:mm:ss, and h:mm:ss for an outage time), and read like the CSV file.
+XLSX_TIME_IDS = {18: "h:mm AM/PM", 19: "h:mm:ss AM/PM", 20: "h:mm", 21: "h:mm:ss", 45: "mm:ss", 46: "[h]:mm:ss", 47: "mm:ss.0"}
+XLSX_DATE_IDS = {14: "dd-mm-yyyy", 15: "d-mmm-yy", 16: "d-mmm", 17: "mmm-yy", 22: "dd-mm-yyyy h:mm"}
+
+
+def _xlsx_kind(code):
+    """'date', 'time' or '' for a number format code."""
+    c = re.sub(r'"[^"]*"|\[(?!h\]|m\]|s\])[^\]]*\]|\\.', "", (code or "").lower())
+    if re.search(r"[dy]", c) or ("m" in c and not re.search(r"[hs]", c) and re.search(r"mmm", c)):
+        return "date"
+    if re.search(r"[hs]", c):
+        return "time"
+    return ""
+
+
+def _xlsx_value_text(num, kind):
+    if kind == "time":
+        secs = int(round(num * 86400))
+        return "%d:%02d:%02d" % (secs // 3600, (secs % 3600) // 60, secs % 60)
+    if kind == "date":
+        d = datetime.datetime(1899, 12, 30) + datetime.timedelta(seconds=int(round(num * 86400)))
+        return d.strftime("%d-%m-%Y %H:%M:%S") if (d.hour or d.minute or d.second) else d.strftime("%d-%m-%Y")
+    if num == int(num) and abs(num) < 1e15:
+        return str(int(num))
+    return repr(num)
+
+
+def excel_csv_copy(path):
+    """If the file is an Excel (.xlsx) file, writes its first sheet to a temporary CSV file and returns
+    (temporary path, note). Returns None for a file that is not .xlsx."""
+    try:
+        with open(path, "rb") as fb:
+            start = fb.read(4)
+    except OSError:
+        return None
+    if start != b"PK\x03\x04":
+        return None
+    try:
+        z = zipfile.ZipFile(path)
+    except (zipfile.BadZipFile, OSError):
+        raise UserError("This Excel file could not be opened, or it is damaged:\n%s\nDownload it again, or save it as CSV." % path)
+    fd, out_path = tempfile.mkstemp(prefix="excel_", suffix=".csv")
+    os.close(fd)
+    n_rows = 0
+    try:
+        with z, open(out_path, "w", newline="", encoding="utf-8") as fo:
+            names = z.namelist()
+            shared = []
+            if "xl/sharedStrings.xml" in names:
+                for si in ElementTree.fromstring(z.read("xl/sharedStrings.xml")).findall(NS + "si"):
+                    shared.append("".join(t.text or "" for t in si.iter(NS + "t")))
+            kinds = []
+            if "xl/styles.xml" in names:
+                st = ElementTree.fromstring(z.read("xl/styles.xml"))
+                custom = {}
+                for nf in st.iter(NS + "numFmt"):
+                    custom[int(nf.get("numFmtId"))] = nf.get("formatCode") or ""
+                xfs = st.find(NS + "cellXfs")
+                for xf in (xfs.findall(NS + "xf") if xfs is not None else []):
+                    fid = int(xf.get("numFmtId") or 0)
+                    if fid in XLSX_TIME_IDS:
+                        kinds.append("time")
+                    elif fid in XLSX_DATE_IDS:
+                        kinds.append("date")
+                    else:
+                        kinds.append(_xlsx_kind(custom.get(fid, "")))
+            wb = ElementTree.fromstring(z.read("xl/workbook.xml"))
+            rels = ElementTree.fromstring(z.read("xl/_rels/workbook.xml.rels"))
+            target = dict((r.get("Id"), r.get("Target")) for r in rels)
+            first = wb.find(NS + "sheets").findall(NS + "sheet")[0]
+            tgt = target[first.get(RNS + "id")].lstrip("/")
+            part = tgt if tgt.startswith("xl/") else "xl/" + tgt
+            w = csv.writer(fo)
+            with z.open(part) as fh:
+                for _, el in ElementTree.iterparse(fh, events=("end",)):
+                    if el.tag != NS + "row":
+                        continue
+                    vals = []
+                    for c in el.findall(NS + "c"):
+                        ci = _ref_to_col(c.get("r") or "")
+                        if ci < 0:
+                            ci = len(vals)
+                        while len(vals) <= ci:
+                            vals.append("")
+                        t = c.get("t")
+                        v = c.find(NS + "v")
+                        if t == "inlineStr":
+                            val = "".join(x.text or "" for x in c.iter(NS + "t"))
+                        elif t == "s":
+                            val = shared[int(v.text)] if v is not None and v.text else ""
+                        elif t in ("str", "e"):
+                            val = v.text if v is not None and v.text else ""
+                        elif t == "b":
+                            val = "TRUE" if (v is not None and v.text == "1") else "FALSE"
+                        elif v is None or not v.text:
+                            val = ""
+                        else:
+                            try:
+                                num = float(v.text)
+                            except ValueError:
+                                val = v.text
+                            else:
+                                sidx = int(c.get("s") or 0)
+                                val = _xlsx_value_text(num, kinds[sidx] if sidx < len(kinds) else "")
+                        vals[ci] = val
+                    el.clear()
+                    w.writerow(vals)
+                    n_rows += 1
+    except UserError:
+        _remove_quietly(out_path)
+        raise
+    except Exception as e:
+        _remove_quietly(out_path)
+        raise UserError("This Excel file could not be read:\n%s\n(%s)\nSave it as CSV and add the CSV file instead." % (path, e))
+    return out_path, "it is an Excel file; the app read its first sheet (%s lines)" % "{:,}".format(n_rows)
+
+
+def readable_copy(path):
+    """The file to read for a company file: the file itself, or a temporary CSV made from an Excel file and/or
+    from a day-wise tripping count. Returns (path to read, [temporary files], [notes for the log])."""
+    temps, notes, use = [], [], path
+    got = excel_csv_copy(use)
+    if got:
+        use = got[0]
+        temps.append(use)
+        notes.append(got[1])
+    try:
+        got = day_matrix_copy(use)
+    except UserError:
+        for t in temps:
+            _remove_quietly(t)
+        raise
+    if got:
+        use = got[0]
+        temps.append(use)
+        notes.append(got[1])
+    return use, temps, notes
+
+
 # A "day-wise tripping count" export (the NBPDCL monthly view): one line per feeder, and for each day of the month
 # a pair of columns, outage hours (HH:MM) and number of trippings, then a Total pair. The app turns such a file into
 # ordinary lines (one per feeder per day, with its date) in a temporary copy, and reads that copy like any other file.
@@ -896,13 +1036,16 @@ def day_matrix_copy(path):
                     break
         finally:
             src.close()
-        rows = list(csv.reader(top))
-    except (OSError, csv.Error):
+    except OSError:
         return None
-    head_i = None
-    for i, r in enumerate(rows):
-        if any(_matrix_key(c) == "daysofmonth" for c in r):
-            head_i = i
+    rows, head_i, sep = [], None, ","
+    for sep in (",", ";", "\t", "|"):
+        try:
+            rows = list(csv.reader(top, delimiter=sep))
+        except csv.Error:
+            continue
+        head_i = next((i for i, r in enumerate(rows) if any(_matrix_key(c) == "daysofmonth" for c in r)), None)
+        if head_i is not None:
             break
     if head_i is None:
         return None
@@ -984,6 +1127,7 @@ def day_matrix_copy(path):
         return None
 
     day_date.known = month_from is not None
+    day_date.days = set()
 
     def pair_values(r, hc, end):
         hrs = cnt = None
@@ -993,6 +1137,8 @@ def day_matrix_copy(path):
                 continue
             if hrs is None and ":" in v:
                 hrs = v
+            elif hrs is None and cnt is not None and re.match(r"^\d+\.\d+$", v):     # hours written as 1.50
+                hrs = "%d:%02d" % (int(float(v)), int(round((float(v) % 1) * 60)))
             elif cnt is None and re.match(r"^\d+(\.0+)?$", v):
                 cnt = v
         return hrs, cnt
@@ -1007,7 +1153,7 @@ def day_matrix_copy(path):
         with open(out_path, "w", newline="", encoding="utf-8") as fo:
             w = csv.writer(fo)
             w.writerow(DAY_MATRIX_HEAD)
-            reader = csv.reader(src.lines())
+            reader = csv.reader(src.lines(), delimiter=sep)
             n = -1
             body = []
             for r in reader:
@@ -1037,6 +1183,12 @@ def day_matrix_copy(path):
         raise UserError("This file could not be read:\n%s\n(%s)" % (path, e))
     finally:
         src.close()
+    if not month_from and len(day_date.days) > 1:
+        _remove_quietly(out_path)
+        raise UserError("This file is a day-wise tripping count with figures on %d days (Day %s), but the month is not "
+                        "written at the top of the file, so the dates cannot be known:\n%s\n"
+                        "Download the file again with the Month-Year line at the top, or download one day at a time."
+                        % (len(day_date.days), ", ".join(str(x) for x in sorted(day_date.days)), path))
     note = "it is a day-wise tripping count (a pair of columns for each day of the month). The app turned it into %s lines, " \
            "one for each feeder and day with an outage, from %s feeders" % ("{:,}".format(lines), "{:,}".format(feeders))
     if days_seen:
@@ -1092,6 +1244,7 @@ def _matrix_out(w, r, cols, pairs, day_date, pair_values, days_seen, lines, feed
         if d is None and day_date.known:                  # a day outside the dates at the top of the file
             out_range += 1
             continue
+        day_date.days.add(day)
         if d:
             days_seen.add(d)
         w.writerow([cell("circle"), cell("division"), cell("substation"), cell("feeder"), cell("fcode"), cell("msn"),
@@ -1111,8 +1264,8 @@ def find_layout(path):
     with open(path, "rb") as fb:
         start = fb.read(8)
     if start[:4] == b"PK\x03\x04" or start[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
-        raise UserError("This is an Excel file, not a CSV file:\n%s\n"
-                        "Open it in Excel, choose File > Save As > CSV (Comma delimited), and add the saved CSV file instead." % path)
+        raise UserError("This is an old-style Excel file (.xls), which the app cannot read:\n%s\n"
+                        "Open it in Excel, choose File > Save As > CSV (Comma delimited) or Excel Workbook (.xlsx), and add the saved file instead." % path)
     src = LineSource(path)
     try:
         sample = []
@@ -1166,14 +1319,15 @@ def dates_inside(path, limit=400):
     """Looks at the first rows of a file and returns the dates written in its Date column, as {date: rows}."""
     out = {}
     try:
-        conv = day_matrix_copy(path)
+        use, temps, _ = readable_copy(path)
     except UserError:
-        conv = None
-    if conv:
+        return out
+    if temps:
         try:
-            return dates_inside(conv[0], limit)
+            return dates_inside(use, limit)
         finally:
-            _remove_quietly(conv[0])
+            for t in temps:
+                _remove_quietly(t)
     try:
         lay = find_layout(path)
         src = LineSource(path)
@@ -1329,10 +1483,10 @@ def read_files(inputs, report_date, master, types, store, log, progress, cancel)
         seen_discom = {}
         if cancel.is_set():
             raise Cancelled()
-        orig_path, conv = path, day_matrix_copy(path)
-        if conv:
-            path = conv[0]
-            log("info", "File %d (%s): %s" % (file_no, short, conv[1]))
+        orig_path = path
+        path, conv, conv_notes = readable_copy(orig_path)
+        for note in conv_notes:
+            log("info", "File %d (%s): %s." % (file_no, short, note.rstrip(".")))
         try:
             lay = find_layout(path)
             sep, notes = lay["sep"], lay["notes"]
@@ -1517,9 +1671,9 @@ def read_files(inputs, report_date, master, types, store, log, progress, cancel)
             raise UserError("This file could not be read to the end:\n%s\n(%s)\nCheck the drive and try again." % (path, e))
         finally:
             src.close()
-            if conv:
-                _remove_quietly(path)
-                path = orig_path
+            for t in conv:
+                _remove_quietly(t)
+            path = orig_path
         db.commit()
         done_bytes += max(1, os.path.getsize(path))
         c["files"] += 1
@@ -2902,8 +3056,8 @@ def run_gui():
     def browse(section, company):
         if state["busy"]:
             return
-        got = filedialog.askopenfilenames(title="%s, %s: choose the outage CSV file(s)" % (section, company),
-                                          filetypes=[("CSV files", "*.csv *.txt"), ("All files", "*.*")])
+        got = filedialog.askopenfilenames(title="%s, %s: choose the outage CSV or Excel file(s)" % (section, company),
+                                          filetypes=[("CSV or Excel files", "*.csv *.txt *.xlsx"), ("All files", "*.*")])
         already = dict((x[2], x) for x in chosen_files())
         for p in got:
             p = os.path.normpath(p)

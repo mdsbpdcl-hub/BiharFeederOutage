@@ -373,19 +373,19 @@ DISCOMS.forEach(function(g){
   var card = el("div", {class:"card dcard " + g.d}, [el("h3", {text:g.d})]);
   g.cos.forEach(function(co){
     var key = g.d + "|" + co;
-    var input = el("input", {type:"file", accept:".csv,text/csv", multiple:true, hidden:true, "aria-label":g.d + " " + co + " files"});
+    var input = el("input", {type:"file", accept:".csv,.txt,.xlsx,text/csv", multiple:true, hidden:true, "aria-label":g.d + " " + co + " files"});
     var list = el("div", {class:"files"});
     var x = el("button", {class:"xbtn", type:"button", title:"Remove", "aria-label":"Remove the " + co + " file(s)", html:IC_X, hidden:true});
     var slot = el("div", {class:"slot", "data-key":key}, [el("div", {class:"co", text:co}), list, el("label", {class:"pick"}, ["Choose", input]), x]);
     function show(){
       var fs = FILES[key] || [];
       list.textContent = ""; slot.classList.toggle("has", fs.length > 0); x.hidden = !fs.length;
-      if (!fs.length) list.appendChild(el("div", {class:"none", text:"No file. Choose or drop the CSV file here."}));
+      if (!fs.length) list.appendChild(el("div", {class:"none", text:"No file. Choose or drop the CSV or Excel (.xlsx) file here."}));
       fs.forEach(function(f){ list.appendChild(el("div", {title:f.name, text:f.name + "  (" + (f.size / 1048576).toFixed(1) + " MB)"})); });
     }
     function put(fs){
-      fs = Array.prototype.filter.call(fs, function(f){ return /\.csv$/i.test(f.name) || f.type === "text/csv"; });
-      if (!fs.length) { toast("Only CSV files can be used here."); return; }
+      fs = Array.prototype.filter.call(fs, function(f){ return /\.(csv|txt|xlsx)$/i.test(f.name) || f.type === "text/csv"; });
+      if (!fs.length) { toast("Only CSV or Excel (.xlsx) files can be used here."); return; }
       FILES[key] = (FILES[key] || []).concat(fs).filter(function(f, i, a){ return a.findIndex(function(o){ return o.name === f.name && o.size === f.size; }) === i; });
       show(); filesChanged();
     }
